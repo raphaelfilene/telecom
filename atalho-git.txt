@@ -1,0 +1,15 @@
+### Baixando diretório
+cd ~ \
+&& cd Documentos \
+&& git clone https://github.com/raphaelfilene/telecom.git
+
+
+### Atualizando
+cd ~ \
+&& cd Documentos/telecom \
+&& git init \
+&& git remote remove origin \
+; git remote add origin https://github.com/raphaelfilene/telecom.git \
+&& git add . \
+&& git commit -m "atualizando" \
+&& git push origin master
