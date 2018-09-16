@@ -2,7 +2,7 @@
 
 from pygame import*
 from pygame.locals import*
-import os,sys
+import os,sys,random
 
 init() #este init é do pygame e serve para iniciar o display e suas fontes
 
@@ -14,7 +14,7 @@ from time import time
 class Janela:
 	u'''Esta classe trabalhará as propriedades básicas da janela do jogo'''
 	#ícone do jogo
-	icone=image.load('imagens/icone.jpg')
+	icone=image.load('imagens/icone.png')
 	
 	#título da janela
 	nome='Jogo da Dama com Processamento de Voz'
@@ -94,6 +94,16 @@ class Tabuleiro:
 	margens=[0.23,0.15,0.02,0.15] #esquerda, cima, direita, baixo
 	casas=[image.load('imagens/piso1.jpg'),image.load('imagens/piso2.jpg')]
 	def __init__(self,qtd_casas,dimensao_tela):
+		self.qtd_casas=qtd_casas
+
+		#criando as listas com as posições das peças
+		self.configuracao=[[0]*qtd_casas[0] for i in xrange(qtd_casas[1])] #0=vazia, 1='player 1', 2='player 2'
+		self.configuracao[0]=[2]*qtd_casas[0]
+		self.configuracao[1]=[2]*qtd_casas[0]
+		self.configuracao[-1]=[1]*qtd_casas[0]
+		self.configuracao[-2]=[1]*qtd_casas[0]
+
+
 		#determinando as dimensões do tabuleiro
 		self.dimensao=[
 				int(dimensao_tela[0]*(1-self.margens[0]-self.margens[2])),
@@ -117,24 +127,35 @@ class Tabuleiro:
 		#posição do tabuleiro na tela
 		self.posicao=[int(a*b) for a,b in zip(dimensao_tela,self.margens)]
 
+	def desenhar(self,screen,peca1,peca2):
+		screen.tela.blit(self.imagem,self.posicao)
+		for y in xrange(self.qtd_casas[1]):
+			for x in xrange(self.qtd_casas[0]):
+				peca=[None,peca1,peca2][self.configuracao[y][x]]
+				if peca:
+					x_p,y_p=self.posicao
+					x_p+=(x+0.5)*self.dimensoes_casas[0]-0.5*peca.get_width()
+					y_p+=(y+0.5)*self.dimensoes_casas[1]-0.5*peca.get_height()
+					screen.tela.blit(peca,[int(x_p),int(y_p)])
+
 class Avatar:
 	dimensao_percentual=0.18
-	nomes=['Kim','Trump']
+	nomes=['Chewbacca','Yoda','Darth Vader','Han Solo']
 	tamanho_fonte=24
 	fonte='arial'
 	negrito=1
 	italico=0
-	cores=[(255,0,0),(0,0,255)] #cores para os avatares
+	cores=[(255,255,0),(0,255,0),(255,0,0),(0,0,255)] #cores para os avatares
 	posicao_percentual_tela=[0.01,0.1]
 	def __init__(self,numero_avatar,dimensao_tela,player):
 		#dimensão do avatar
 		self.dimensao=[int(self.dimensao_percentual*dimensao_tela[0]),int(self.dimensao_percentual*dimensao_tela[1])]
 
 		#capturando e convertendo a imagem para um formato mais rápido e com as dimensões desejadas sem distorcê-la
-		avatar=image.load('imagens/lider%s.jpg'%numero_avatar).convert()
+		avatar=image.load('imagens/char%s.jpg'%numero_avatar).convert()
 		xo,yo=avatar.get_size() #dimensões originais
 		x,y=self.dimensao #dimensões desejadas
-		if xo>yo:
+		if float(xo)/x>float(yo)/y:
 			L=int(y*xo/float(yo))
 			avatar=transform.scale(avatar,[L,y])
 			avatar=avatar.subsurface([(L-x)/2,0,x,y])
@@ -165,38 +186,46 @@ class Avatar:
 			self.posicao=(l,dimensao_tela[1]-h-self.imagem.get_height())
 
 class Peca: #Peça
-	dimensao_percentual=0.8
+	dimensao_percentual=0.6
 	def __init__(self,numero_peca,dimensao_casa,player):
 		#dimensão de cada peça
 		self.dimensao=[int(self.dimensao_percentual*dimensao_casa[0]),int(self.dimensao_percentual*dimensao_casa[1])]
 
 		#capturando e convertendo a imagem para um formato mais rápido e com as dimensões desejadas sem distorcê-la
-		peca=image.load('imagens/soldado%s.jpg'%numero_peca).convert()
+		peca=image.load('imagens/soldado%s.png'%numero_peca).convert_alpha()
 
 		xo,yo=peca.get_size() #dimensões originais
 		x,y=self.dimensao #dimensões desejadas
 
-		print xo,yo,x,y
-		if xo>yo:
+		if float(xo)/x>float(yo)/y:
 			L=int(y*xo/float(yo))
-			print L
-			print [(L-x)/2,0,x,y]
 			peca=transform.scale(peca,[L,y])
-			peca=peca.subsurface([(L-x)/2,0,x,y])
 		else:
 			H=int(x*yo/float(xo))
 			peca=transform.scale(peca,[x,H])
-			peca=peca.subsurface([0,(H-y)/2,x,y])
+
+		self.imagem=peca
 
 screen=Janela()
 jogo=Jogo(pytime)
 
 tab=Tabuleiro([8,8],screen.dimensao)
-avatar1=Avatar(1,screen.dimensao,player=1)
-avatar2=Avatar(2,screen.dimensao,player=2)
 
-#peca1=Peca(1,tab.dimensoes_casas,player=1)
-#peca2=Peca(2,tab.dimensoes_casas,player=2)
+chars=range(1,len(Avatar.nomes)+1)
+char1=random.choice(chars)
+chars.remove(char1)
+char2=random.choice(chars)
+
+avatar1=Avatar(char1,screen.dimensao,player=1)
+avatar2=Avatar(char2,screen.dimensao,player=2)
+
+pecas=range(1,5)
+peca1=random.choice(pecas)
+pecas.remove(peca1)
+peca2=random.choice(pecas)
+
+peca1=Peca(peca1,tab.dimensoes_casas,player=1)
+peca2=Peca(peca2,tab.dimensoes_casas,player=2)
 
 teclas=Teclas()
 
@@ -247,7 +276,7 @@ def jogar():
 				teclas.situacao_teclas(evento)
 
 		#colocando o tabuleiro
-		screen.tela.blit(tab.imagem,tab.posicao)
+		tab.desenhar(screen,peca1.imagem,peca2.imagem)
 
 		#posicionando os avatares
 		screen.tela.blit(avatar1.imagem,avatar1.posicao)
