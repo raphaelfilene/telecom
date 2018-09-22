@@ -93,6 +93,8 @@ class Teclas:
 class Tabuleiro:
 	margens=[0.23,0.15,0.02,0.15] #esquerda, cima, direita, baixo
 	casas=[image.load('imagens/piso1.jpg'),image.load('imagens/piso2.jpg')]
+	jogador_da_vez=1
+	
 	def __init__(self,qtd_casas,dimensao_tela):
 		self.qtd_casas=qtd_casas
 
@@ -127,13 +129,89 @@ class Tabuleiro:
 		#posição do tabuleiro na tela
 		self.posicao=[int(a*b) for a,b in zip(dimensao_tela,self.margens)]
 
-	def desenhar(self,screen,peca1,peca2):
-		screen.tela.blit(self.imagem,self.posicao)
+		#criando superfície que sobreporá as casas em que o mouse estiver sobreposto
+		self.casa_mouseover=Surface(self.dimensoes_casas)
+		self.casa_mouseover.fill((0,255,0))
+
+		#criando superfície que sobreporá as casas para as quais a peça selecionada poderá se locomover
+		self.casa_possivel=Surface(self.dimensoes_casas)
+		self.casa_possivel.fill((0,255,255))
+
+		#criando superfície de uma casa que receber o click do mouse
+		self.casa_click=Surface(self.dimensoes_casas)
+		self.casa_click.fill((0,0,255))
+		self.peca_clicada=None
+
+		#corrigindo o valor da dimensão (pois como há divisão esse valor precisa ser corrigido)
+		self.dimensao=[self.qtd_casas[i]*self.dimensoes_casas[i] for i in [0,1]]
+
+	def analisar_clicks(self,screen,mouse,houve_click):
+		#verificando se o mouse está em cima de alguma das casas
+		click_sobre_tabuleiro=False
+		if self.posicao[0]+self.dimensao[0]>mouse[0]>self.posicao[0] and self.posicao[1]+self.dimensao[1]>mouse[1]>self.posicao[1]:
+			click_sobre_tabuleiro=True
+
+			#capturando os índices da casa sobre o qual o mouse está em cima
+			x_over=(mouse[0]-self.posicao[0])/self.dimensoes_casas[0]
+			y_over=(mouse[1]-self.posicao[1])/self.dimensoes_casas[1]
+			
+			#variável que dirá se a casa do mouseover é a mesma casa que foi clicada pelo mouse por último
+			esta_sobre_casa_ja_clicada=True if self.peca_clicada and self.peca_clicada[0]==x_over and self.peca_clicada[1]==y_over else False
+			
+			#atualizando os índices da casa clicada
+			if houve_click and self.configuracao[y_over][x_over]==self.jogador_da_vez:
+				self.peca_clicada=None if esta_sobre_casa_ja_clicada else [x_over,y_over]
+			
+			#fazendo aparecer o efeito de uma casa cujo mouse está sobreposto a ela
+			if not esta_sobre_casa_ja_clicada:
+				screen.tela.blit(self.casa_mouseover,[self.posicao[0]+x_over*self.dimensoes_casas[0],self.posicao[1]+y_over*self.dimensoes_casas[1]])
+
+		#fazendo aparecer o efeito de uma casa cujo mouse havia clicado por último
+		if self.peca_clicada:
+			x_click,y_click=self.peca_clicada
+			screen.tela.blit(self.casa_click,[self.posicao[0]+x_click*self.dimensoes_casas[0],self.posicao[1]+y_click*self.dimensoes_casas[1]])
+
+			if self.configuracao[y_click][x_click]==self.jogador_da_vez:
+				if x_click==0:
+					xs=[1]
+				elif x_click==len(self.configuracao[0])-1:
+					xs=[len(self.configuracao[0])-2]
+				else:
+					xs=[x_click-1,x_click+1]
+
+				if y_click==0:
+					ys=[1]
+				elif y_click==len(self.configuracao)-1:
+					ys=[len(self.configuracao)-2]
+				else:
+					ys=[y_click-1,y_click+1]
+
+				casas=[]
+				for x in xs:
+					for y in ys:
+						if self.configuracao[y][x]==0:
+							casas.append([x,y])
+
+				for c in casas:
+					screen.tela.blit(self.casa_possivel,[self.posicao[0]+c[0]*self.dimensoes_casas[0],self.posicao[1]+c[1]*self.dimensoes_casas[1]])
+
+				#movendo peça:
+				if houve_click and click_sobre_tabuleiro:
+					for c in casas:
+						if c[0]==x_over and c[1]==y_over:
+							self.configuracao[y_click][x_click]=0
+							self.configuracao[y_over][x_over]=self.jogador_da_vez
+							self.jogador_da_vez=3-self.jogador_da_vez
+							self.peca_clicada=None
+							break
+
+
+	def desenhar_pecas(self,screen,peca1,peca2):
 		for y in xrange(self.qtd_casas[1]):
 			for x in xrange(self.qtd_casas[0]):
 				peca=[None,peca1,peca2][self.configuracao[y][x]]
 				if peca:
-					x_p,y_p=self.posicao
+					x_p,y_p=self.posicao[0],self.posicao[1]
 					x_p+=(x+0.5)*self.dimensoes_casas[0]-0.5*peca.get_width()
 					y_p+=(y+0.5)*self.dimensoes_casas[1]-0.5*peca.get_height()
 					screen.tela.blit(peca,[int(x_p),int(y_p)])
@@ -186,13 +264,13 @@ class Avatar:
 			self.posicao=(l,dimensao_tela[1]-h-self.imagem.get_height())
 
 class Peca: #Peça
-	dimensao_percentual=0.6
+	dimensao_percentual=0.9
 	def __init__(self,numero_peca,dimensao_casa,player):
 		#dimensão de cada peça
 		self.dimensao=[int(self.dimensao_percentual*dimensao_casa[0]),int(self.dimensao_percentual*dimensao_casa[1])]
 
 		#capturando e convertendo a imagem para um formato mais rápido e com as dimensões desejadas sem distorcê-la
-		peca=image.load('imagens/soldado%s.png'%numero_peca).convert_alpha()
+		peca=image.load('imagens/helm%s.png'%numero_peca).convert_alpha()
 
 		xo,yo=peca.get_size() #dimensões originais
 		x,y=self.dimensao #dimensões desejadas
@@ -275,8 +353,14 @@ def jogar():
 				#atualizando a situação das teclas clicadas/pressionadas
 				teclas.situacao_teclas(evento)
 
-		#colocando o tabuleiro
-		tab.desenhar(screen,peca1.imagem,peca2.imagem)
+		#desenhando o tabuleiro
+		screen.tela.blit(tab.imagem,tab.posicao)
+
+		#analisar clicks
+		tab.analisar_clicks(screen,mouse.get_pos(),1 in teclas.clicadas)
+		
+		#desenhando as peças
+		tab.desenhar_pecas(screen,peca1.imagem,peca2.imagem)
 
 		#posicionando os avatares
 		screen.tela.blit(avatar1.imagem,avatar1.posicao)
