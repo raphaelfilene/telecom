@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 
+# para instalar as bibliotecas relativas ao reconhecimento de voz:
+# sudo apt-get install python-pyaudio
+# sudo pip install SpeechRecognition pyaudio
+
 from pygame import*
 from pygame.locals import*
 import os,sys,random
+import speech_recognition as sr #importamos o modúlo
 
 init() #este init é do pygame e serve para iniciar o display e suas fontes
 
@@ -307,6 +312,8 @@ peca2=Peca(peca2,tab.dimensoes_casas,player=2)
 
 teclas=Teclas()
 
+rec = sr.Recognizer() #instanciamos o modúlo do reconhecedor
+
 def rotinas():
 	u'''Agrupei nesta função as atividades que precisam ser "rodadas" ao final de cada quadro'''
 	#atualizando o tempo
@@ -319,26 +326,8 @@ def rotinas():
 	screen.tela.fill((0,0,0))
 	
 	#fazendo o jogo rodar com a qtd de quadros por segundos estabelecida
-	jogo.time.Clock().tick(jogo.fps)
+	#jogo.time.Clock().tick(jogo.fps) #neste software em particular eu não vou utilizar isso
 
-u'''
-def mover_boneco():
-	#caso seja pressionado o botão 'w' ou  a 'seta para cima'
-	if K_w in teclas.pressionadas or K_UP in teclas.pressionadas:
-		boneco.posicao[1]+=-boneco.passo;
-	
-	#caso seja pressionado o botão 's' ou  a 'seta para baixo'
-	if K_s in teclas.pressionadas or K_DOWN in teclas.pressionadas:
-		boneco.posicao[1]+=+boneco.passo;
-	
-	#caso seja pressionado o botão 'a' ou  a 'seta para a esquerda'
-	if K_a in teclas.pressionadas or K_LEFT in teclas.pressionadas:
-		boneco.posicao[0]+=-boneco.passo;
-	
-	#caso seja pressionado o botão 'd' ou  a 'seta para a direita'
-	if K_d in teclas.pressionadas or K_RIGHT in teclas.pressionadas:
-		boneco.posicao[0]+=boneco.passo;'''
-		
 	
 def jogar():
 	while jogo.run:
@@ -352,6 +341,16 @@ def jogar():
 			else:
 				#atualizando a situação das teclas clicadas/pressionadas
 				teclas.situacao_teclas(evento)
+
+		#aplicando o reconhecedor de voz
+		try:
+			with sr.Microphone() as fala: #chamos a gravação do microphone de fala
+				rec.adjust_for_ambient_noise(fala)
+				frase = rec.listen(fala) #o metodo listen vai ouvir o que a gente falar e gravar na variavel frase
+				comando=rec.recognize_google(frase, language='pt') #transformando nossa fala em texto
+		except:
+			comando=u'Fala não reconhecida'
+		print comando
 
 		#desenhando o tabuleiro
 		screen.tela.blit(tab.imagem,tab.posicao)
