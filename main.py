@@ -150,15 +150,46 @@ class Tabuleiro:
 		#corrigindo o valor da dimensão (pois como há divisão esse valor precisa ser corrigido)
 		self.dimensao=[self.qtd_casas[i]*self.dimensoes_casas[i] for i in [0,1]]
 
-	def analisar_clicks(self,screen,mouse,houve_click):
+		#lista de comandos
+		self.comandos=[]
+		for i in ['a','b','c','d','e','f','g','h']:
+			for j in ['um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito']:
+				self.comandos.append(i+' '+j)
+			for j in ['1', '2', '3', '4', '5', '6', '7', '8']:
+				self.comandos.append(i+j)		
+
+	def analisar_clicks(self,screen,mouse,houve_click,comando):
+		comando=comando.lower()
+		comando_valido=comando!='' and comando in self.comandos
+
 		#verificando se o mouse está em cima de alguma das casas
 		click_sobre_tabuleiro=False
-		if self.posicao[0]+self.dimensao[0]>mouse[0]>self.posicao[0] and self.posicao[1]+self.dimensao[1]>mouse[1]>self.posicao[1]:
+		if comando_valido or (self.posicao[0]+self.dimensao[0]>mouse[0]>self.posicao[0] and self.posicao[1]+self.dimensao[1]>mouse[1]>self.posicao[1]):
 			click_sobre_tabuleiro=True
 
-			#capturando os índices da casa sobre o qual o mouse está em cima
-			x_over=(mouse[0]-self.posicao[0])/self.dimensoes_casas[0]
-			y_over=(mouse[1]-self.posicao[1])/self.dimensoes_casas[1]
+			if comando_valido:
+				try:
+					for i in [[u'1',u'um'],[u'2',u'dois'],[u'3',u'três'],[u'4',u'quatro'],[u'5','cinco'],[u'6','seis'],[u'7',u'sete'],[u'8',u'oito']]:
+						if i[0] in comando or i[1] in comando:
+							x_over=int(i[0])-1
+							if i[0] in comando:
+								comando=comando.replace(i[0],'')
+							else:
+								comando=comando.replace(i[1],'')
+							for j,v in enumerate([u'a',u'b',u'c',u'd',u'e',u'f',u'g',u'h']):
+								if v in comando:
+									y_over=j
+									break
+							break
+					houve_click=True
+				except:
+					x_over,y_over=0,0
+					houve_click=False
+
+			else:
+				#capturando os índices da casa sobre o qual o mouse está em cima
+				x_over=(mouse[0]-self.posicao[0])/self.dimensoes_casas[0]
+				y_over=(mouse[1]-self.posicao[1])/self.dimensoes_casas[1]
 			
 			#variável que dirá se a casa do mouseover é a mesma casa que foi clicada pelo mouse por último
 			esta_sobre_casa_ja_clicada=True if self.peca_clicada and self.peca_clicada[0]==x_over and self.peca_clicada[1]==y_over else False
@@ -314,6 +345,17 @@ teclas=Teclas()
 
 rec = sr.Recognizer() #instanciamos o modúlo do reconhecedor
 
+def comando_de_voz():
+	#aplicando o reconhecedor de voz
+	try:
+		with sr.Microphone() as fala: #chamos a gravação do microphone de fala
+			rec.adjust_for_ambient_noise(fala)
+			frase = rec.listen(fala) #o metodo listen vai ouvir o que a gente falar e gravar na variavel frase
+			comando=rec.recognize_google(frase, language='pt') #transformando nossa fala em texto
+	except:
+		comando=u'Fala não reconhecida'
+	return comando
+
 def rotinas():
 	u'''Agrupei nesta função as atividades que precisam ser "rodadas" ao final de cada quadro'''
 	#atualizando o tempo
@@ -342,21 +384,18 @@ def jogar():
 				#atualizando a situação das teclas clicadas/pressionadas
 				teclas.situacao_teclas(evento)
 
-		#aplicando o reconhecedor de voz
-		try:
-			with sr.Microphone() as fala: #chamos a gravação do microphone de fala
-				rec.adjust_for_ambient_noise(fala)
-				frase = rec.listen(fala) #o metodo listen vai ouvir o que a gente falar e gravar na variavel frase
-				comando=rec.recognize_google(frase, language='pt') #transformando nossa fala em texto
-		except:
-			comando=u'Fala não reconhecida'
+		if jogo.tempo>0:
+			comando=comando_de_voz()
+		else:
+			comando=''
+
 		print comando
 
 		#desenhando o tabuleiro
 		screen.tela.blit(tab.imagem,tab.posicao)
 
 		#analisar clicks
-		tab.analisar_clicks(screen,mouse.get_pos(),1 in teclas.clicadas)
+		tab.analisar_clicks(screen,mouse.get_pos(),1 in teclas.clicadas,comando)
 		
 		#desenhando as peças
 		tab.desenhar_pecas(screen,peca1.imagem,peca2.imagem)
