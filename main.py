@@ -107,8 +107,19 @@ class Tabuleiro:
 		self.configuracao=[[0]*qtd_casas[0] for i in xrange(qtd_casas[1])] #0=vazia, 1='player 1', 2='player 2'
 		self.configuracao[0]=[2]*qtd_casas[0]
 		self.configuracao[1]=[2]*qtd_casas[0]
+		self.configuracao[2]=[2]*qtd_casas[0]
+		self.configuracao[3]=[2]*qtd_casas[0]
 		self.configuracao[-1]=[1]*qtd_casas[0]
 		self.configuracao[-2]=[1]*qtd_casas[0]
+		self.configuracao[-3]=[1]*qtd_casas[0]
+		self.configuracao[-4]=[1]*qtd_casas[0]
+
+		for i in range(qtd_casas[0]):
+			for j in range(qtd_casas[1]):
+				if i % 2 == 0 and j % 2 == 0:
+					self.configuracao[i][j]= 0
+				if i % 2 != 0 and j % 2 != 0:
+					self.configuracao[i][j]= 0
 
 
 		#determinando as dimensões do tabuleiro
@@ -152,15 +163,16 @@ class Tabuleiro:
 
 		#lista de comandos
 		self.comandos=[]
-		for i in ['a','b','c','d','e','f','g','h']:
-			for j in ['um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito']:
+		for i in ['a','b','c','d','e','f','g','h','i','j']:
+			for j in ['um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito','nove','dez']:
 				self.comandos.append(i+' '+j)
-			for j in ['1', '2', '3', '4', '5', '6', '7', '8']:
+			for j in ['1', '2', '3', '4', '5', '6', '7', '8','9','10']:
 				self.comandos.append(i+j)		
 
 	def analisar_clicks(self,screen,mouse,houve_click,comando):
 		comando=comando.lower()
 		comando_valido=comando!='' and comando in self.comandos
+		hop = False
 
 		#verificando se o mouse está em cima de alguma das casas
 		click_sobre_tabuleiro=False
@@ -169,14 +181,14 @@ class Tabuleiro:
 
 			if comando_valido:
 				try:
-					for i in [[u'1',u'um'],[u'2',u'dois'],[u'3',u'três'],[u'4',u'quatro'],[u'5','cinco'],[u'6','seis'],[u'7',u'sete'],[u'8',u'oito']]:
+					for i in [[u'1',u'um'],[u'2',u'dois'],[u'3',u'três'],[u'4',u'quatro'],[u'5','cinco'],[u'6','seis'],[u'7',u'sete'],[u'8',u'oito'],[u'9',u'nove'],[u'10',u'dez']]:
 						if i[0] in comando or i[1] in comando:
 							x_over=int(i[0])-1
 							if i[0] in comando:
 								comando=comando.replace(i[0],'')
 							else:
 								comando=comando.replace(i[1],'')
-							for j,v in enumerate([u'a',u'b',u'c',u'd',u'e',u'f',u'g',u'h']):
+							for j,v in enumerate([u'a',u'b',u'c',u'd',u'e',u'f',u'g',u'h',u'i',u'j']):
 								if v in comando:
 									y_over=j
 									break
@@ -204,6 +216,7 @@ class Tabuleiro:
 
 		#fazendo aparecer o efeito de uma casa cujo mouse havia clicado por último
 		if self.peca_clicada:
+			hop = False
 			x_click,y_click=self.peca_clicada
 			screen.tela.blit(self.casa_click,[self.posicao[0]+x_click*self.dimensoes_casas[0],self.posicao[1]+y_click*self.dimensoes_casas[1]])
 
@@ -228,6 +241,18 @@ class Tabuleiro:
 						if self.configuracao[y][x]==0:
 							casas.append([x,y])
 
+						if self.jogador_da_vez == 1:
+							if self.configuracao[y][x]==2:
+								if self.configuracao[y-1][x+1 if x > x_click else x-1] == 0:
+									hop = True
+									casas.append([x+1 if x > x_click else x-1,y-1])
+
+						if self.jogador_da_vez == 2:
+							if self.configuracao[y][x] == 1:
+								if self.configuracao[y+1][x+1 if x > x_click else x-1] == 0:
+									hop = True
+									casas.append([x+1 if x > x_click else x-1,y+1])
+
 				for c in casas:
 					screen.tela.blit(self.casa_possivel,[self.posicao[0]+c[0]*self.dimensoes_casas[0],self.posicao[1]+c[1]*self.dimensoes_casas[1]])
 
@@ -237,6 +262,22 @@ class Tabuleiro:
 						if c[0]==x_over and c[1]==y_over:
 							self.configuracao[y_click][x_click]=0
 							self.configuracao[y_over][x_over]=self.jogador_da_vez
+
+							if hop == True:
+
+								if self.jogador_da_vez == 1:
+									
+									if x_over > x_click:
+										self.configuracao[y_over+1][x_over-1] = 0
+									else:
+										self.configuracao[y_over+1][x_over+1] = 0
+
+								if self.jogador_da_vez == 2:
+									if x_over > x_click:
+										self.configuracao[y_over-1][x_over-1] = 0
+									else:
+										self.configuracao[y_over-1][x_over+1] = 0
+
 							self.jogador_da_vez=3-self.jogador_da_vez
 							self.peca_clicada=None
 							break
@@ -323,7 +364,7 @@ class Peca: #Peça
 screen=Janela()
 jogo=Jogo(pytime)
 
-tab=Tabuleiro([8,8],screen.dimensao)
+tab=Tabuleiro([10,10],screen.dimensao)
 
 chars=range(1,len(Avatar.nomes)+1)
 char1=random.choice(chars)
@@ -352,6 +393,7 @@ def comando_de_voz():
 			rec.adjust_for_ambient_noise(fala)
 			frase = rec.listen(fala) #o metodo listen vai ouvir o que a gente falar e gravar na variavel frase
 			comando=rec.recognize_google(frase, language='pt') #transformando nossa fala em texto
+			comando = comando.lower().replace(" ","")
 	except:
 		comando=u'Fala não reconhecida'
 	return comando
