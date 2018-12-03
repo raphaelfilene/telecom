@@ -4,8 +4,8 @@
 # sudo apt-get install python-pyaudio
 # sudo pip install SpeechRecognition pyaudio
 
-from pygame import*
-from pygame.locals import*
+from pygame import *
+from pygame.locals import *
 import os,sys,random
 import speech_recognition as sr #importamos o modúlo
 
@@ -50,8 +50,7 @@ class Janela:
 			self.tela=display.set_mode((self.dimensao),RESIZABLE)
 		else:
 			self.fullscreen=True
-			self.tela=display.set_mode((self.dimensao),FULLSCREEN)
-		
+			self.tela=display.set_mode((self.dimensao),FULLSCREEN)	
 
 class Jogo:
 	u'''Esta classe trabalhará nas propriedades gerais e básicas do jogo'''
@@ -84,7 +83,7 @@ class Tabuleiro:
 	def __init__(self,qtd_casas,dimensao_tela):
 		self.qtd_casas=qtd_casas
 
-		#criando as listas com as posições das peças
+		#criando as listas com as posições das peças (monta o tabuleiro de damas)
 		self.configuracao=[[0]*qtd_casas[0] for i in xrange(qtd_casas[1])] #0=vazia, 1='player 1', 2='player 2'
 		for i in xrange(4):
 			self.configuracao[i]=[2]*qtd_casas[0]
@@ -96,7 +95,6 @@ class Tabuleiro:
 					self.configuracao[i][j]= 0
 				if i % 2 != 0 and j % 2 != 0:
 					self.configuracao[i][j]= 0
-
 
 		#determinando as dimensões do tabuleiro
 		self.dimensao=[
@@ -148,7 +146,7 @@ class Tabuleiro:
 		#lista de comandos
 		self.comandos=[]
 		for i in ['a','b','c','d','e','f','g','h','i','j']:
-			for j in ['um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito','nove','dez']:
+			for j in ['um', 'dois', 'tres', 'quatro', 'cinco', 'seis', 'sete', 'oito','nove','dez']:
 				self.comandos.append(i+' '+j)
 			for j in ['1', '2', '3', '4', '5', '6', '7', '8','9','10']:
 				self.comandos.append(i+j)		
@@ -157,6 +155,11 @@ class Tabuleiro:
 		self.locais_casas_possiveis=[]
 
 	def desenhar_pecas(self,screen,peca1,peca2):
+		#desenhando as casas no tabuleiro
+		for x in xrange(1,self.qtd_casas[0]+1):
+			for y in xrange(1,self.qtd_casas[1]+1):
+				self.imagem.blit(self.casas[(x+y)%2],[x*self.dimensoes_casas[0],y*self.dimensoes_casas[1]])
+
 		#desenhando a casa selecionada
 		if self.local_casa_selecionada:
 			x,y=self.local_casa_selecionada
@@ -165,7 +168,7 @@ class Tabuleiro:
 		#desenhando as casas que poderão ser alvos de escolha da peça selecionada
 		for local in self.locais_casas_possiveis:
 			x,y=local
-			self.imagem.blit(self.casa_possivel,[(x+1)*self.dimensoes_casas[0],(y+1)*self.dimensoes_casas[1]])			
+			self.imagem.blit(self.casa_possivel,[(x+1)*self.dimensoes_casas[0],(y+1)*self.dimensoes_casas[1]])		
 
 		#desenhando as peças
 		for y in xrange(self.qtd_casas[1]):
@@ -178,9 +181,10 @@ class Tabuleiro:
 					screen.tela.blit(peca,[int(x_p),int(y_p)])
 
 	def analisar_comando(self,comando):
+
 		if comando in self.comandos:
 			if comando in tab.comandos:
-				for i in [[u'1',u'um'],[u'2',u'dois'],[u'3',u'três'],[u'4',u'quatro'],[u'5','cinco'],[u'6','seis'],[u'7',u'sete'],[u'8',u'oito'],[u'9',u'nove'],[u'10',u'dez']]:
+				for i in [[u'1',u'um'],[u'2',u'dois'],[u'3',u'tres'],[u'4',u'quatro'],[u'5','cinco'],[u'6','seis'],[u'7',u'sete'],[u'8',u'oito'],[u'9',u'nove'],[u'10',u'dez']]:
 					if i[0] in comando or i[1] in comando:
 						y_over=int(i[0])-1
 						if i[0] in comando:
@@ -193,64 +197,88 @@ class Tabuleiro:
 								break
 						break
 
-				print x_over,y_over,self.configuracao[x_over][y_over],self.configuracao[y_over][x_over]
+				self.local_casa_selecionada = [x_over,y_over]
 
-				if self.local_casa_selecionada:
-					#se escolhi a mesma casa seguidamente
-					if [x_over,y_over]==self.local_casa_selecionada:
-						self.local_casa_selecionada=None
+				if [x_over,y_over] in self.locais_casas_possiveis:
 
-					#se escolhi me mover para uma das casas possíveis de se realizar movimento
-					elif [x_over,y_over] in self.locais_casas_possiveis:
-						self.local_casa_selecionada=None
+					xo,yo=self.local_casa_atual
+					self.configuracao[yo][xo] = 0
+					self.configuracao[y_over][x_over] = self.jogador_da_vez
+					self.jogador_da_vez = 3-self.jogador_da_vez
+					self.local_casa_atual = None
 
-						xo,yo=self.local_casa_selecionada
-						self.configuracao[xo][yo]=0
-						self.configuracao[x_over,y_over]=self.jogador_da_vez
-						self.jogador_da_vez=3-self.jogador_da_vez
+					if y_over-yo not in [-1,1]:
+						print y_over-yo
+						if x_over > xo:
+							if y_over > yo:
+								self.configuracao[yo+1][xo+1] = 0
+							if y_over < yo:
+								self.configuracao[yo-1][xo+1] = 0
+						else:
+							if y_over > yo:
+								self.configuracao[yo+1][xo-1] = 0
+							if y_over < yo:
+								self.configuracao[yo-1][xo-1] = 0
 
-					#se apenas escolhi outra peça para possíveis movimentos
-					elif self.configuracao[x_over][y_over]==self.jogador_da_vez:
-						self.local_casa_selecionada=[x_over,y_over]
-
-				elif self.configuracao[x_over][y_over]==self.jogador_da_vez:
-					self.local_casa_selecionada=[x_over,y_over]
+				elif self.configuracao[x_over][y_over] == self.jogador_da_vez:
+					self.local_casa_selecionada = [x_over,y_over]
+					self.local_casa_atual = [x_over,y_over]
 
 				else:
 					print u'\nEscolha uma posição válida!\n'
+					self.local_casa_atual = [x_over,y_over]
+
 				self.set_casas_possiveis_prox_movimento()
 				print u'\nPosições válidas: %s\n'%(self.locais_casas_possiveis)
 
 	def set_casas_possiveis_prox_movimento(self):
 		self.locais_casas_possiveis=[]
-		if self.local_casa_selecionada:
-			x,y=self.local_casa_selecionada
-			posicoes_adjacentes=[]
-			if x==0:
-				if y==0:
-					posicoes_adjacentes.append([x+1,y+1])
-				elif y==self.qtd_casas[1]-1:
-					posicoes_adjacentes.append([x+1,y-1])
-				else:
-					posicoes_adjacentes.extend([[x+1,y+1],[x+1,y-1]])
+		if self.local_casa_atual:
+			x,y=self.local_casa_atual
+			if self.configuracao[y][x] == self.jogador_da_vez:
+				posicoes_adjacentes=[]
+				if x==0:
+					if y==0:
+						posicoes_adjacentes.append([x+1,y+1])
+					elif y==self.qtd_casas[1]-1:
+						posicoes_adjacentes.append([x+1,y-1])
+					else:
+						posicoes_adjacentes.extend([[x+1,y+1],[x+1,y-1]])
 
-			elif x==self.qtd_casas[0]-1:
-				if y==0:
-					posicoes_adjacentes.append([x-1,y+1])
-				elif y==self.qtd_casas[1]-1:
-					posicoes_adjacentes.append([x-1,y-1])
+				elif x==self.qtd_casas[0]-1:
+					if y==0:
+						posicoes_adjacentes.append([x-1,y+1])
+					elif y==self.qtd_casas[1]-1:
+						posicoes_adjacentes.append([x-1,y-1])
+					else:
+						posicoes_adjacentes.extend([[x-1,y+1],[x-1,y-1]])
 				else:
-					posicoes_adjacentes.extend([[x-1,y+1],[x-1,y-1]])
+					if y==0:
+						posicoes_adjacentes.extend([[x-1,y+1],[x+1,y+1]])
+					elif y==self.qtd_casas[1]-1:
+						posicoes_adjacentes.extend([[x-1,y-1],[x+1,y-1]])
+					else:
+						posicoes_adjacentes.extend([[x-1,y-1],[x+1,y-1],[x-1,y+1],[x+1,y+1]])
+
+				for xp,yp in posicoes_adjacentes:
+					if self.configuracao[yp][xp] != self.jogador_da_vez:
+						if self.configuracao[yp][xp] == 0:
+							self.locais_casas_possiveis.append([xp,yp])
+
+						if self.configuracao[yp][xp] == 3-self.jogador_da_vez:
+							if xp > x:
+								xp = x+2
+							else:
+								xp = x-2
+							if yp > y:
+								yp = y+2
+							else:
+								yp = y-2
+							if xp in xrange(10) and yp in xrange(10):
+								if self.configuracao[yp][xp] == 0:
+									self.locais_casas_possiveis.append([xp,yp])
 			else:
-				if y==0:
-					posicoes_adjacentes.extend([[x-1,y+1],[x+1,y+1]])
-				elif y==self.qtd_casas[1]-1:
-					posicoes_adjacentes.extend([[x-1,y-1],[x+1,y-1]])
-				else:
-					posicoes_adjacentes.extend([[x-1,y-1],[x+1,y-1],[x-1,y+1],[x+1,y+1]])
-			for xp,yp in posicoes_adjacentes:
-				if self.configuracao[xp][yp]!=self.jogador_da_vez:
-					self.locais_casas_possiveis.append([xp,yp])
+				return []
 
 class Avatar:
 	dimensao_percentual=0.18
@@ -341,21 +369,20 @@ peca2=random.choice(pecas)
 peca1=Peca(peca1,tab.dimensoes_casas,player=1)
 peca2=Peca(peca2,tab.dimensoes_casas,player=2)
 
-
-rec = sr.Recognizer() #instanciamos o modúlo do reconhecedor
-
+rec = sr.Recognizer() #instanciamos o módulo do reconhecedor
 
 def comando_de_voz():
 	#aplicando o reconhecedor de voz
-	try:
-		with sr.Microphone() as fala: #chamos a gravação do microphone de fala
-			rec.adjust_for_ambient_noise(fala)
-			frase = rec.listen(fala) #o metodo listen vai ouvir o que a gente falar e gravar na variavel frase
-			comando=rec.recognize_google(frase, language='pt') #transformando nossa fala em texto
-			comando = comando.lower().replace(" ","")
-	except:
-		comando=u'Fala não reconhecida'
-	print u'\nVez do jogador %s\n'%tab.jogador_da_vez
+#	try:
+#		with sr.Microphone() as fala: #chamos a gravação do microphone de fala
+#			rec.adjust_for_ambient_noise(fala)
+#			frase = rec.listen(fala) #o metodo listen vai ouvir o que a gente falar e gravar na variavel frase
+#			comando=rec.recognize_google(frase, language='pt') #transformando nossa fala em texto
+#			comando = comando.lower().replace(" ","")
+#	except:
+#		comando=u'Fala não reconhecida'
+#	print u'\nVez do jogador %s\n'%tab.jogador_da_vez
+	comando = raw_input("Digite posicao: ")
 	return comando
 
 def rotinas():
@@ -368,7 +395,6 @@ def rotinas():
 	
 	#"limpando"(na verdade eu estou pintando ela de rgb=(0,0,0)=preto) a tela --- essa limpeza só será visualizada na próxima vez que a tela for atualizada
 	screen.tela.fill((0,0,0))
-
 	
 def jogar():
 	while jogo.run:
@@ -383,20 +409,24 @@ def jogar():
 			comando=''
 
 		print comando
-		tab.analisar_comando(comando)
-		
-		#desenhando o tabuleiro
-		screen.tela.blit(tab.imagem,tab.posicao)
-		
-		#desenhando as peças
-		tab.desenhar_pecas(screen,peca1.imagem,peca2.imagem)
 
-		#posicionando os avatares
-		screen.tela.blit(avatar1.imagem,avatar1.posicao)
-		screen.tela.blit(avatar2.imagem,avatar2.posicao)
-		
-		#rotinas que preciso rodar toda vez que um quadro terminar
-		rotinas()
+		#retira o delay no processo de colorir as peças
+		for i in range(2):
+
+			tab.analisar_comando(comando)
+			
+			#desenhando o tabuleiro
+			screen.tela.blit(tab.imagem,tab.posicao)
+			
+			#desenhando as peças
+			tab.desenhar_pecas(screen,peca1.imagem,peca2.imagem)
+
+			#posicionando os avatares
+			screen.tela.blit(avatar1.imagem,avatar1.posicao)
+			screen.tela.blit(avatar2.imagem,avatar2.posicao)
+			
+			#rotinas que preciso rodar toda vez que um quadro terminar
+			rotinas()
 
 jogar()
 
