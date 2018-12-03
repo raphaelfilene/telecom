@@ -418,7 +418,7 @@ def rotinas():
 	#fazendo o jogo rodar com a qtd de quadros por segundos estabelecida
 	#jogo.time.Clock().tick(jogo.fps) #neste software em particular eu não vou utilizar isso
 
-tempo_para_iniciar=10000
+tempo_para_iniciar=3600
 
 #tocando música de fundo
 musica_fundo=mixer.Sound('som_fundo.ogg')
