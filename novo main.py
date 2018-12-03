@@ -22,7 +22,7 @@ class Janela:
 	icone=image.load('imagens/icone.png')
 	
 	#título da janela
-	nome='Jogo da Dama com Processamento de Voz'
+	nome='Jogo de Damas com Processamento de Voz'
 	
 	#tamanho da tela (largura x altura)
 	dimensao=[800,600]
@@ -42,6 +42,13 @@ class Janela:
 		
 		#criando o objeto 'tela' (é sobre tal objeto que colocarei todo o jogo)
 		self.tela=display.set_mode((self.dimensao),[RESIZABLE,FULLSCREEN][self.fullscreen])
+
+		#desenhando o fundo
+		fundo=image.load('imagens/fundo.jpg').convert()
+		tam_fundo=fundo.get_size()
+		tam_fundo=[self.dimensao[0],(tam_fundo[1]*self.dimensao[0])/tam_fundo[0]]
+		self.fundo=transform.scale(fundo,tam_fundo)
+		self.posicao_fundo=0
 		
 	def set_fullscreen(self):
 		u'''Com esta função será possível trocar a tela de fullscreen pra modo janela e vice-versa'''
@@ -51,6 +58,15 @@ class Janela:
 		else:
 			self.fullscreen=True
 			self.tela=display.set_mode((self.dimensao),FULLSCREEN)	
+
+	def desenhar_fundo(self):
+		self.posicao_fundo=(self.posicao_fundo+3)%self.fundo.get_height()
+		sobra=self.fundo.get_height()-self.posicao_fundo
+		self.tela.blit(self.fundo,[0,-self.posicao_fundo])
+
+		if sobra<self.dimensao[1]:
+			self.tela.blit(self.fundo,[0,sobra])
+
 
 class Jogo:
 	u'''Esta classe trabalhará nas propriedades gerais e básicas do jogo'''
@@ -110,6 +126,7 @@ class Tabuleiro:
 
 		#criando uma superfície onde sobreporei o tabuleiro
 		self.imagem=Surface(self.dimensao)
+		self.imagem.set_colorkey(0)
 
 		#desenhando as casas no tabuleiro
 		for x in xrange(1,qtd_casas[0]+1):
@@ -134,6 +151,7 @@ class Tabuleiro:
 
 		#criando superfície para a casa selecionada
 		self.casa_selecionada=Surface(self.dimensoes_casas)
+
 		self.casa_selecionada.fill((255,0,255))
 
 		#criando superfície que sobreporá as casas para as quais a peça selecionada poderá se locomover
@@ -311,6 +329,7 @@ class Avatar:
 
 		#superfície com o avatar e a legenda
 		self.imagem=Surface((x,y+legenda.get_height()))
+		self.imagem.set_colorkey(0)
 		posicao_legenda_x=(x-legenda.get_width())/2 #é uma posição relativa à superfície que contém a legenda e o avatar
 
 		if player==1:
@@ -373,16 +392,15 @@ rec = sr.Recognizer() #instanciamos o módulo do reconhecedor
 
 def comando_de_voz():
 	#aplicando o reconhecedor de voz
-#	try:
-#		with sr.Microphone() as fala: #chamos a gravação do microphone de fala
-#			rec.adjust_for_ambient_noise(fala)
-#			frase = rec.listen(fala) #o metodo listen vai ouvir o que a gente falar e gravar na variavel frase
-#			comando=rec.recognize_google(frase, language='pt') #transformando nossa fala em texto
-#			comando = comando.lower().replace(" ","")
-#	except:
-#		comando=u'Fala não reconhecida'
-#	print u'\nVez do jogador %s\n'%tab.jogador_da_vez
-	comando = raw_input("Digite posicao: ")
+	try:
+		with sr.Microphone() as fala: #chamos a gravação do microphone de fala
+			rec.adjust_for_ambient_noise(fala)
+			frase = rec.listen(fala) #o metodo listen vai ouvir o que a gente falar e gravar na variavel frase
+			comando=rec.recognize_google(frase, language='pt') #transformando nossa fala em texto
+			comando = comando.lower().replace(" ","")
+	except:
+		comando=u'Fala não reconhecida'
+	print u'\nVez do jogador %s\n'%tab.jogador_da_vez
 	return comando
 
 def rotinas():
@@ -394,8 +412,36 @@ def rotinas():
 	display.update()
 	
 	#"limpando"(na verdade eu estou pintando ela de rgb=(0,0,0)=preto) a tela --- essa limpeza só será visualizada na próxima vez que a tela for atualizada
-	screen.tela.fill((0,0,0))
-	
+	#screen.tela.fill((0,0,0))
+	screen.desenhar_fundo()
+
+	#fazendo o jogo rodar com a qtd de quadros por segundos estabelecida
+	#jogo.time.Clock().tick(jogo.fps) #neste software em particular eu não vou utilizar isso
+
+tempo_para_iniciar=10000
+
+#tocando música de fundo
+musica_fundo=mixer.Sound('som_fundo.ogg')
+musica_fundo.play()
+
+
+#criando fundo inicial
+diretorio_fonte='fontes/Starjedi.ttf'
+
+tam1=80
+fonte1=font.Font(diretorio_fonte,tam1)
+
+tam2=30
+fonte2=font.Font(diretorio_fonte,tam2)
+
+negrito=1
+italico=0
+cor=(214,197,2)
+legenda1=fonte1.render('jogo de damas',1,cor)
+pos1=[int(0.5*screen.dimensao[0]-0.5*legenda1.get_width()),int(0.2*screen.dimensao[1])]
+legenda2=fonte2.render('com processamento de voz',1,cor)
+pos2=[int(0.5*screen.dimensao[0]-0.5*legenda2.get_width()),int(0.22*screen.dimensao[1]+legenda1.get_height())]
+
 def jogar():
 	while jogo.run:
 		#analisando os eventos que ocorreram no quadro atual
@@ -403,30 +449,38 @@ def jogar():
 			if evento.type==QUIT:
 				jogo.quit()
 
-		if jogo.tempo>0:
-			comando=comando_de_voz()
-		else:
-			comando=''
-
-		print comando
-
-		#retira o delay no processo de colorir as peças
-		for i in range(2):
-
-			tab.analisar_comando(comando)
+		if jogo.tempo>tempo_para_iniciar:
 			
-			#desenhando o tabuleiro
-			screen.tela.blit(tab.imagem,tab.posicao)
-			
-			#desenhando as peças
-			tab.desenhar_pecas(screen,peca1.imagem,peca2.imagem)
+			if jogo.tempo>tempo_para_iniciar+1:
+				#comando=comando_de_voz()
+				comando = raw_input("Digite posicao: ")
 
-			#posicionando os avatares
-			screen.tela.blit(avatar1.imagem,avatar1.posicao)
-			screen.tela.blit(avatar2.imagem,avatar2.posicao)
-			
-			#rotinas que preciso rodar toda vez que um quadro terminar
-			rotinas()
+				print comando
+
+			else:
+				comando=''
+
+			#retira o delay no processo de colorir as peças
+			for i in xrange(2):
+
+				tab.analisar_comando(comando)
+				
+				#desenhando o tabuleiro
+				screen.tela.blit(tab.imagem,tab.posicao)
+				
+				#desenhando as peças
+				tab.desenhar_pecas(screen,peca1.imagem,peca2.imagem)
+
+				#posicionando os avatares
+				screen.tela.blit(avatar1.imagem,avatar1.posicao)
+				screen.tela.blit(avatar2.imagem,avatar2.posicao)
+
+		else: #enquanto o jogo ainda está iniciando:
+			screen.tela.blit(legenda1,pos1)
+			screen.tela.blit(legenda2,pos2)
+				
+		#rotinas que preciso rodar toda vez que um quadro terminar
+		rotinas()
 
 jogar()
 
