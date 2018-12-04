@@ -274,11 +274,17 @@ class Tabuleiro:
 								break
 						break
 
+				if self.jogo_escolhido == 1:
+					if x_over > 9:
+						x_over = 9
+					if y_over > 9:
+						y_over = 9
+
 				if self.jogo_escolhido == 2:
-					if x_over > 8:
-						x_over = 8
-					if y_over > 8:
-						y_over = 8
+					if x_over > 7:
+						x_over = 7
+					if y_over > 7:
+						y_over = 7
 
 				self.local_casa_selecionada = [x_over,y_over]
 
