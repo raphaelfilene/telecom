@@ -95,22 +95,67 @@ class Tabuleiro:
 	cor_fonte=(255,255,255)
 	negrito=1
 	italico=0
+	jogo_escolhido = 0
 	
-	def __init__(self,qtd_casas,dimensao_tela):
+	def __init__(self,qtd_casas,dimensao_tela,jogo):
+
+		self.jogo_escolhido = jogo
+
+		if self.jogo_escolhido == 2:
+			qtd_casas = [8,8]
+
 		self.qtd_casas=qtd_casas
 
-		#criando as listas com as posições das peças (monta o tabuleiro de damas)
-		self.configuracao=[[0]*qtd_casas[0] for i in xrange(qtd_casas[1])] #0=vazia, 1='player 1', -1='player 2'
-		for i in xrange(4):
-			self.configuracao[i]=[-1]*qtd_casas[0]
-			self.configuracao[-i-1]=[1]*qtd_casas[0]
+		#jogo 1 = damas
+		if self.jogo_escolhido == 1:
+			#criando as listas com as posições das peças (monta o tabuleiro de damas)
+			self.configuracao=[[0]*qtd_casas[0] for i in xrange(qtd_casas[1])] #0=vazia, 1='player 1', -1='player 2'
+			for i in xrange(4):
+				self.configuracao[i]=[-1]*qtd_casas[0]
+				self.configuracao[-i-1]=[1]*qtd_casas[0]
 
-		for i in range(qtd_casas[0]):
-			for j in range(qtd_casas[1]):
-				if i % 2 == 0 and j % 2 == 0:
-					self.configuracao[i][j]= 0
-				if i % 2 != 0 and j % 2 != 0:
-					self.configuracao[i][j]= 0
+			for i in range(qtd_casas[0]):
+				for j in range(qtd_casas[1]):
+					if i % 2 == 0 and j % 2 == 0:
+						self.configuracao[i][j]= 0
+					if i % 2 != 0 and j % 2 != 0:
+						self.configuracao[i][j]= 0
+
+		#jogo 2 = xadrez
+		if self.jogo_escolhido == 2:
+			#criando as listas com as posições das peças (monta o tabuleiro de xadrez)
+			self.configuracao=[[0]*qtd_casas[0] for i in xrange(qtd_casas[1])] #0=vazia #3=peão #4=torre #5=cavalo #6=bispo #7=rainha #8=rei
+
+			#posicionando os peões
+			for i in range(8):
+				self.configuracao[1][i] = 4
+				self.configuracao[6][i] = 3
+
+			#posicionando as torres
+			self.configuracao[0][0] = 6
+			self.configuracao[0][7] = 6
+			self.configuracao[7][0] = 5
+			self.configuracao[7][7] = 5
+
+			#posicionando os cavalos
+			self.configuracao[0][1] = 8
+			self.configuracao[0][6] = 8
+			self.configuracao[7][1] = 7
+			self.configuracao[7][6] = 7
+
+			#posicionando os bispos
+			self.configuracao[0][2] = 10
+			self.configuracao[0][5] = 10
+			self.configuracao[7][2] = 9
+			self.configuracao[7][5] = 9
+
+			#posicionando as rainhas
+			self.configuracao[0][3] = 12
+			self.configuracao[7][3] = 11
+
+			#posicionando os reis
+			self.configuracao[0][4] = 14
+			self.configuracao[7][4] = 13
 
 		#determinando as dimensões do tabuleiro
 		self.dimensao=[
@@ -172,7 +217,7 @@ class Tabuleiro:
 		self.local_casa_selecionada=None
 		self.locais_casas_possiveis=[]
 
-	def desenhar_pecas(self,screen,peca1,peca2,peca3,peca4):
+	def desenhar_pecas(self,screen,peca1,peca2,peca3,peca4,peca5=None,peca6=None,peca7=None,peca8=None,peca9=None,peca10=None,peca11=None,peca12=None):
 		#desenhando as casas no tabuleiro
 		for x in xrange(1,self.qtd_casas[0]+1):
 			for y in xrange(1,self.qtd_casas[1]+1):
@@ -191,12 +236,21 @@ class Tabuleiro:
 		#desenhando as peças
 		for y in xrange(self.qtd_casas[1]):
 			for x in xrange(self.qtd_casas[0]):
-				peca=[None,peca1,peca2,peca3,peca4][self.configuracao[y][x]]
-				if peca:
-					x_p,y_p=self.posicao[0],self.posicao[1]
-					x_p+=(x+1.5)*self.dimensoes_casas[0]-0.5*peca.get_width()
-					y_p+=(y+1.5)*self.dimensoes_casas[1]-0.5*peca.get_height()
-					screen.tela.blit(peca,[int(x_p),int(y_p)])
+				if peca5 == None:
+					peca=[None,peca1,peca2,peca3,peca4][self.configuracao[y][x]]
+					if peca:
+						x_p,y_p=self.posicao[0],self.posicao[1]
+						x_p+=(x+1.5)*self.dimensoes_casas[0]-0.5*peca.get_width()
+						y_p+=(y+1.5)*self.dimensoes_casas[1]-0.5*peca.get_height()
+						screen.tela.blit(peca,[int(x_p),int(y_p)])
+				else:
+					peca=[peca1,peca2,peca3,peca4,peca5,peca6,peca7,peca8,peca9,peca10,peca11,peca12,None,None,None,None][self.configuracao[y][x]-3]
+					if peca:
+						x_p,y_p=self.posicao[0],self.posicao[1]
+						x_p+=(x+1.5)*self.dimensoes_casas[0]-0.5*peca.get_width()
+						y_p+=(y+1.5)*self.dimensoes_casas[1]-0.5*peca.get_height()
+						screen.tela.blit(peca,[int(x_p),int(y_p)])					
+
 
 	def analisar_comando(self,comando):
 
@@ -217,66 +271,92 @@ class Tabuleiro:
 
 				self.local_casa_selecionada = [x_over,y_over]
 
-				if [x_over,y_over] in self.locais_casas_possiveis:
+				#lógica de damas
+				if self.jogo_escolhido == 1:
 
-					xo,yo=self.local_casa_atual
-					self.configuracao[y_over][x_over] = self.configuracao[yo][xo]
-					self.configuracao[yo][xo] = 0
-					self.local_casa_atual = None
+					if [x_over,y_over] in self.locais_casas_possiveis:
 
-					#se tornar dama
-					if y_over in [0,9]:
-						self.configuracao[y_over][x_over] = 2*self.jogador_da_vez
+						xo,yo=self.local_casa_atual
+						self.configuracao[y_over][x_over] = self.configuracao[yo][xo]
+						self.configuracao[yo][xo] = 0
+						self.local_casa_atual = None
 
-					#se matar uma peca inimiga
-					if y_over-yo not in [-1,1]:
-						if x_over > xo:
-							if y_over > yo:
-								self.configuracao[y_over-1][x_over-1] = 0
-							if y_over < yo:
-								self.configuracao[y_over+1][x_over-1] = 0
-						else:
-							if y_over > yo:
-								self.configuracao[y_over-1][x_over+1] = 0
-							if y_over < yo:
-								self.configuracao[y_over+1][x_over+1] = 0
+						#se tornar dama
+						if y_over in [0,9]:
+							self.configuracao[y_over][x_over] = 2*self.jogador_da_vez
 
-					self.jogador_da_vez = -1*self.jogador_da_vez
+						#se matar uma peca inimiga
+						if y_over-yo not in [-1,1]:
+							if x_over > xo:
+								if y_over > yo:
+									self.configuracao[y_over-1][x_over-1] = 0
+								if y_over < yo:
+									self.configuracao[y_over+1][x_over-1] = 0
+							else:
+								if y_over > yo:
+									self.configuracao[y_over-1][x_over+1] = 0
+								if y_over < yo:
+									self.configuracao[y_over+1][x_over+1] = 0
 
-				elif np.sign(self.configuracao[x_over][y_over]) == np.sign(self.jogador_da_vez):
-					self.local_casa_selecionada = [x_over,y_over]
-					self.local_casa_atual = [x_over,y_over]
+						self.jogador_da_vez = -1*self.jogador_da_vez
 
-				else:
-					self.local_casa_atual = [x_over,y_over]
+					elif np.sign(self.configuracao[x_over][y_over]) == np.sign(self.jogador_da_vez):
+						self.local_casa_selecionada = [x_over,y_over]
+						self.local_casa_atual = [x_over,y_over]
 
-				self.set_casas_possiveis_prox_movimento()
-				print u'\nPosições válidas: %s\n'%(self.locais_casas_possiveis)
+					else:
+						self.local_casa_atual = [x_over,y_over]
 
-				condicao_vitoria = 0
+					self.set_casas_possiveis_prox_movimento()
+					print u'\nPosições válidas: %s\n'%(self.locais_casas_possiveis)
 
-				for i in range(self.qtd_casas[0]):
-					if all(x[i] >= 0 for x in self.configuracao):
-						condicao_vitoria += 1
-
-				if condicao_vitoria == self.qtd_casas[0]:
-					print "Vitória do jogador 1"
-				else:
 					condicao_vitoria = 0
 
-				for i in range(self.qtd_casas[0]):
-					if all(x[i] <= 0 for x in self.configuracao):
-						condicao_vitoria += 1
+					for i in range(self.qtd_casas[0]):
+						if all(x[i] >= 0 for x in self.configuracao):
+							condicao_vitoria += 1
 
-				if condicao_vitoria == self.qtd_casas[0]:
-					print "Vitória do jogador 2"
-				else:
-					condicao_vitoria = 0
+					if condicao_vitoria == self.qtd_casas[0]:
+						print "Vitória do jogador 1"
+					else:
+						condicao_vitoria = 0
+
+					for i in range(self.qtd_casas[0]):
+						if all(x[i] <= 0 for x in self.configuracao):
+							condicao_vitoria += 1
+
+					if condicao_vitoria == self.qtd_casas[0]:
+						print "Vitória do jogador 2"
+					else:
+						condicao_vitoria = 0
+
+				#lógica de xadrez
+				if self.jogo_escolhido == 2:
+
+					if [x_over,y_over] in self.locais_casas_possiveis:
+
+						xo,yo=self.local_casa_atual
+						self.configuracao[y_over][x_over] = self.configuracao[yo][xo]
+						self.configuracao[yo][xo] = 0
+						self.local_casa_atual = None
+						self.jogador_da_vez = -1*self.jogador_da_vez
+
+					elif (self.configuracao[x_over][y_over]%2 == 1 and self.jogador_da_vez == 1) or (self.configuracao[x_over][y_over]%2 == 0 and self.jogador_da_vez == -1):
+						self.local_casa_selecionada = [x_over,y_over]
+						self.local_casa_atual = [x_over,y_over]
+
+					else:
+						self.local_casa_atual = [x_over,y_over]
+
+					self.set_casas_possiveis_prox_movimento()
+					print u'\nPosições válidas: %s\n'%(self.locais_casas_possiveis)
 
 	def set_casas_possiveis_prox_movimento(self):
 		self.locais_casas_possiveis=[]
 		if self.local_casa_atual:
 			x,y=self.local_casa_atual
+
+			#movimento de peça
 			if np.sign(self.configuracao[y][x]) == np.sign(self.jogador_da_vez) and self.configuracao[y][x] in [-1,1]:
 				posicoes_adjacentes=[]
 				if x==0:
@@ -325,6 +405,7 @@ class Tabuleiro:
 								if self.configuracao[yp][xp] == 0:
 									self.locais_casas_possiveis.append([xp,yp])
 
+			#movimento de damas
 			elif np.sign(self.configuracao[y][x]) == np.sign(self.jogador_da_vez) and self.configuracao[y][x] in [-2,2]:
 				posicoes_adjacentes=[]
 
@@ -392,8 +473,6 @@ class Tabuleiro:
 				if xo in xrange(10) and yo in xrange(10) and (self.configuracao[yo][xo] == -2*self.jogador_da_vez or self.configuracao[yo][xo] == -1*self.jogador_da_vez):
 					posicoes_adjacentes.append([xo,yo])
 
-				print posicoes_adjacentes
-
 				for xp,yp in posicoes_adjacentes:
 					if np.sign(self.configuracao[yp][xp]) != np.sign(self.jogador_da_vez):
 						if self.configuracao[yp][xp] == 0:
@@ -411,6 +490,581 @@ class Tabuleiro:
 							if xp in xrange(10) and yp in xrange(10):
 								if self.configuracao[yp][xp] == 0:
 									self.locais_casas_possiveis.append([xp,yp])
+
+			#movimentos de xadrez
+			elif (self.configuracao[y][x]%2 == 1 and self.jogador_da_vez == 1) or (self.configuracao[y][x]%2 == 0 and self.jogador_da_vez == -1):
+
+				#movimento de peões brancos
+				if self.configuracao[y][x] == 3:
+					posicoes_adjacentes=[]
+
+					xo = x-1
+					yo = y-1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0 and self.configuracao[yo][xo] != 0:
+							posicoes_adjacentes.append([xo,yo])
+
+					xo = x
+					yo = y-1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+
+					xo = x+1
+					yo = y-1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0 and self.configuracao[yo][xo] != 0:
+							posicoes_adjacentes.append([xo,yo])
+
+					for xp,yp in posicoes_adjacentes:
+						if self.jogador_da_vez == 1:
+							if self.configuracao[yp][xp]%2 != 1:
+								self.locais_casas_possiveis.append([xp,yp])
+
+				#movimento de peões pretos
+				if self.configuracao[y][x] == 4:
+					posicoes_adjacentes=[]
+
+					xo = x-1
+					yo = y+1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])
+
+					xo = x
+					yo = y+1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == -1 and self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+
+					xo = x+1
+					yo = y+1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])
+
+					for xp,yp in posicoes_adjacentes:
+						if self.jogador_da_vez == -1:
+							if self.configuracao[yp][xp] == 0:
+								self.locais_casas_possiveis.append([xp,yp])
+							elif self.configuracao[yp][xp]%2 != 0:
+								self.locais_casas_possiveis.append([xp,yp])
+
+				#movimento de torres
+				elif self.configuracao[y][x] in [5,6]:
+					posicoes_adjacentes=[]
+
+					xo = x-1
+					yo = y
+
+					while(xo in xrange(8)):
+
+						if self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+						else:
+							break
+
+						xo -= 1
+
+					if xo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])					
+
+					xo = x
+					yo = y+1
+
+					while(yo in xrange(8)):
+
+						if self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+						else:
+							break
+
+						yo += 1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x+1
+					yo = y
+
+					while(xo in xrange(8)):
+
+						if self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+						else:
+							break
+
+						xo += 1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x
+					yo = y-1
+
+					while(yo in xrange(8)):
+
+						if self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+						else:
+							break
+
+						yo -= 1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						if self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])
+
+					for xp,yp in posicoes_adjacentes:
+						if self.jogador_da_vez == 1:
+							if self.configuracao[yp][xp]%2 != 1:
+								self.locais_casas_possiveis.append([xp,yp])
+						if self.jogador_da_vez == -1:
+							if self.configuracao[yp][xp] == 0:
+								self.locais_casas_possiveis.append([xp,yp])
+							elif self.configuracao[yp][xp]%2 != 0:
+								self.locais_casas_possiveis.append([xp,yp])
+
+				#movimento de cavalos
+				elif self.configuracao[y][x] in [7,8]:
+					posicoes_adjacentes=[]
+
+					xo = x+2
+					yo = y+1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and (self.configuracao[yo][xo]%2 == 1 or self.configuracao[yo][xo] == 0):
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x+2
+					yo = y-1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and (self.configuracao[yo][xo]%2 == 1 or self.configuracao[yo][xo] == 0):
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x-2
+					yo = y+1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and (self.configuracao[yo][xo]%2 == 1 or self.configuracao[yo][xo] == 0):
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x-2
+					yo = y-1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and (self.configuracao[yo][xo]%2 == 1 or self.configuracao[yo][xo] == 0):
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x+1
+					yo = y+2
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and (self.configuracao[yo][xo]%2 == 1 or self.configuracao[yo][xo] == 0):
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x-1
+					yo = y+2
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and (self.configuracao[yo][xo]%2 == 1 or self.configuracao[yo][xo] == 0):
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x+1
+					yo = y-2
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and (self.configuracao[yo][xo]%2 == 1 or self.configuracao[yo][xo] == 0):
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x-1
+					yo = y-2
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and (self.configuracao[yo][xo]%2 == 1 or self.configuracao[yo][xo] == 0):
+							posicoes_adjacentes.append([xo,yo])	
+
+					for xp,yp in posicoes_adjacentes:
+						if self.jogador_da_vez == 1:
+							if self.configuracao[yp][xp]%2 != 1:
+								self.locais_casas_possiveis.append([xp,yp])
+						if self.jogador_da_vez == -1:
+							if self.configuracao[yp][xp] == 0:
+								self.locais_casas_possiveis.append([xp,yp])
+							elif self.configuracao[yp][xp]%2 != 0:
+								self.locais_casas_possiveis.append([xp,yp])
+
+				#movimento de bispos
+				elif self.configuracao[y][x] in [9,10]:
+					posicoes_adjacentes=[]
+
+					xo = x-1
+					yo = y-1
+
+					while(xo in xrange(8) and yo in xrange(8)):
+
+						if self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+						else:
+							break
+
+						xo -= 1
+						yo -= 1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])					
+
+					xo = x-1
+					yo = y+1
+
+					while(xo in xrange(8) and yo in xrange(8)):
+
+						if self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+						else:
+							break
+
+						xo -= 1
+						yo += 1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x+1
+					yo = y-1
+
+					while(xo in xrange(8) and yo in xrange(8)):
+
+						if self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+						else:
+							break
+
+						xo += 1
+						yo -= 1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x+1
+					yo = y+1
+
+					while(xo in xrange(8) and yo in xrange(8)):
+
+						if self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+						else:
+							break
+
+						xo += 1
+						yo += 1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						if self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])
+
+					for xp,yp in posicoes_adjacentes:
+						if self.jogador_da_vez == 1:
+							if self.configuracao[yp][xp]%2 != 1:
+								self.locais_casas_possiveis.append([xp,yp])
+						if self.jogador_da_vez == -1:
+							if self.configuracao[yp][xp] == 0:
+								self.locais_casas_possiveis.append([xp,yp])
+							elif self.configuracao[yp][xp]%2 != 0:
+								self.locais_casas_possiveis.append([xp,yp])
+								
+				#movimento de rainhas
+				elif self.configuracao[y][x] in [11,12]:
+					posicoes_adjacentes=[]
+
+					xo = x-1
+					yo = y-1
+
+					while(xo in xrange(8) and yo in xrange(8)):
+
+						if self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+						else:
+							break
+
+						xo -= 1
+						yo -= 1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])					
+
+					xo = x-1
+					yo = y+1
+
+					while(xo in xrange(8) and yo in xrange(8)):
+
+						if self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+						else:
+							break
+
+						xo -= 1
+						yo += 1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x+1
+					yo = y-1
+
+					while(xo in xrange(8) and yo in xrange(8)):
+
+						if self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+						else:
+							break
+
+						xo += 1
+						yo -= 1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x+1
+					yo = y+1
+
+					while(xo in xrange(8) and yo in xrange(8)):
+
+						if self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+						else:
+							break
+
+						xo += 1
+						yo += 1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						if self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])
+
+					xo = x-1
+					yo = y
+
+					while(xo in xrange(8)):
+
+						if self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+						else:
+							break
+
+						xo -= 1
+
+					if xo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])					
+
+					xo = x
+					yo = y+1
+
+					while(yo in xrange(8)):
+
+						if self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+						else:
+							break
+
+						yo += 1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x+1
+					yo = y
+
+					while(xo in xrange(8)):
+
+						if self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+						else:
+							break
+
+						xo += 1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x
+					yo = y-1
+
+					while(yo in xrange(8)):
+
+						if self.configuracao[yo][xo] == 0:
+							posicoes_adjacentes.append([xo,yo])
+						else:
+							break
+
+						yo -= 1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						if self.jogador_da_vez == -1 and self.configuracao[yo][xo]%2 == 1:
+							posicoes_adjacentes.append([xo,yo])
+
+					for xp,yp in posicoes_adjacentes:
+						if self.jogador_da_vez == 1:
+							if self.configuracao[yp][xp]%2 != 1:
+								self.locais_casas_possiveis.append([xp,yp])
+						if self.jogador_da_vez == -1:
+							if self.configuracao[yp][xp] == 0:
+								self.locais_casas_possiveis.append([xp,yp])
+							elif self.configuracao[yp][xp]%2 != 0:
+								self.locais_casas_possiveis.append([xp,yp])
+
+				#movimento de reis
+				elif self.configuracao[y][x] in [13,14]:
+					posicoes_adjacentes=[]
+
+					xo = x+1
+					yo = y+1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and (self.configuracao[yo][xo]%2 == 1 or self.configuracao[yo][xo] == 0):
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x+1
+					yo = y
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and (self.configuracao[yo][xo]%2 == 1 or self.configuracao[yo][xo] == 0):
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x+1
+					yo = y-1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and (self.configuracao[yo][xo]%2 == 1 or self.configuracao[yo][xo] == 0):
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x
+					yo = y+1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and (self.configuracao[yo][xo]%2 == 1 or self.configuracao[yo][xo] == 0):
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x
+					yo = y-1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and (self.configuracao[yo][xo]%2 == 1 or self.configuracao[yo][xo] == 0):
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x-1
+					yo = y+1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and (self.configuracao[yo][xo]%2 == 1 or self.configuracao[yo][xo] == 0):
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x-1
+					yo = y
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and (self.configuracao[yo][xo]%2 == 1 or self.configuracao[yo][xo] == 0):
+							posicoes_adjacentes.append([xo,yo])	
+
+					xo = x-1
+					yo = y-1
+
+					if xo in xrange(8) and yo in xrange(8):
+						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
+							posicoes_adjacentes.append([xo,yo])
+						elif self.jogador_da_vez == -1 and (self.configuracao[yo][xo]%2 == 1 or self.configuracao[yo][xo] == 0):
+							posicoes_adjacentes.append([xo,yo])	
+
+					for xp,yp in posicoes_adjacentes:
+						if self.jogador_da_vez == 1:
+							if self.configuracao[yp][xp]%2 != 1:
+								self.locais_casas_possiveis.append([xp,yp])
+						if self.jogador_da_vez == -1:
+							if self.configuracao[yp][xp] == 0:
+								self.locais_casas_possiveis.append([xp,yp])
+							elif self.configuracao[yp][xp]%2 != 0:
+								self.locais_casas_possiveis.append([xp,yp])
 
 			else:
 				return []
@@ -465,12 +1119,16 @@ class Avatar:
 
 class Peca: #Peça
 	dimensao_percentual=0.9
-	def __init__(self,numero_peca,dimensao_casa,player):
+	def __init__(self,numero_peca,dimensao_casa,player,jogo):
 		#dimensão de cada peça
 		self.dimensao=[int(self.dimensao_percentual*dimensao_casa[0]),int(self.dimensao_percentual*dimensao_casa[1])]
 
-		#capturando e convertendo a imagem para um formato mais rápido e com as dimensões desejadas sem distorcê-la
-		peca=image.load('imagens/helm%s.png'%numero_peca).convert_alpha()
+		if jogo == 1:
+			#capturando e convertendo a imagem para um formato mais rápido e com as dimensões desejadas sem distorcê-la
+			peca=image.load('imagens/helm%s.png'%numero_peca).convert_alpha()
+
+		if jogo == 2:
+			peca=image.load('imagens/xadrez%s.png'%numero_peca).convert_alpha()
 
 		xo,yo=peca.get_size() #dimensões originais
 		x,y=self.dimensao #dimensões desejadas
@@ -484,10 +1142,13 @@ class Peca: #Peça
 
 		self.imagem=peca
 
+#1 para damas; 2 para xadrez
+jogo_selecionado = 2
+
 screen=Janela()
 jogo=Jogo(pytime)
 
-tab=Tabuleiro([10,10],screen.dimensao)
+tab=Tabuleiro([10,10],screen.dimensao,jogo_selecionado)
 
 chars=range(1,len(Avatar.nomes)+1)
 char1=random.choice(chars)
@@ -497,20 +1158,35 @@ char2=random.choice(chars)
 avatar1=Avatar(char1,screen.dimensao,player=1)
 avatar2=Avatar(char2,screen.dimensao,player=-1)
 
-pecas=range(1,5)
-peca1=random.choice(pecas)
-pecas.remove(peca1)
-peca2=random.choice(pecas)
-pecas.remove(peca2)
-peca3=random.choice(pecas)
-pecas.remove(peca3)
-peca4=random.choice(pecas)
-pecas.remove(peca4)
+if jogo_selecionado == 1:
+	pecas=range(1,5)
+	peca1=random.choice(pecas)
+	pecas.remove(peca1)
+	peca2=random.choice(pecas)
+	pecas.remove(peca2)
+	peca3=random.choice(pecas)
+	pecas.remove(peca3)
+	peca4=random.choice(pecas)
+	pecas.remove(peca4)
 
-peca1=Peca(peca1,tab.dimensoes_casas,player=1)
-peca2=Peca(peca2,tab.dimensoes_casas,player=-1)
-peca3=Peca(peca3,tab.dimensoes_casas,player=1)
-peca4=Peca(peca4,tab.dimensoes_casas,player=-1)
+	peca1=Peca(peca1,tab.dimensoes_casas,1,1)
+	peca2=Peca(peca2,tab.dimensoes_casas,-1,1)
+	peca3=Peca(peca3,tab.dimensoes_casas,1,1)
+	peca4=Peca(peca4,tab.dimensoes_casas,-1,1)
+
+if jogo_selecionado == 2:
+	peca1=Peca(3,tab.dimensoes_casas,1,2)
+	peca2=Peca(4,tab.dimensoes_casas,-1,2)
+	peca3=Peca(5,tab.dimensoes_casas,1,2)
+	peca4=Peca(6,tab.dimensoes_casas,-1,2)
+	peca5=Peca(7,tab.dimensoes_casas,1,2)
+	peca6=Peca(8,tab.dimensoes_casas,-1,2)
+	peca7=Peca(9,tab.dimensoes_casas,1,2)
+	peca8=Peca(10,tab.dimensoes_casas,-1,2)
+	peca9=Peca(11,tab.dimensoes_casas,1,2)
+	peca10=Peca(12,tab.dimensoes_casas,-1,2)
+	peca11=Peca(13,tab.dimensoes_casas,1,2)
+	peca12=Peca(14,tab.dimensoes_casas,-1,2)
 
 rec = sr.Recognizer() #instanciamos o módulo do reconhecedor
 
@@ -547,7 +1223,6 @@ tempo_para_iniciar=3600
 #tocando música de fundo
 musica_fundo=mixer.Sound('som_fundo.ogg')
 musica_fundo.play()
-
 
 #criando fundo inicial
 diretorio_fonte='fontes/Starjedi.ttf'
@@ -593,7 +1268,11 @@ def jogar():
 				screen.tela.blit(tab.imagem,tab.posicao)
 				
 				#desenhando as peças
-				tab.desenhar_pecas(screen,peca1.imagem,peca2.imagem,peca3.imagem,peca4.imagem)
+				if jogo_selecionado == 1:
+					tab.desenhar_pecas(screen,peca1.imagem,peca2.imagem,peca3.imagem,peca4.imagem)
+
+				if jogo_selecionado == 2:
+					tab.desenhar_pecas(screen,peca1.imagem,peca2.imagem,peca3.imagem,peca4.imagem,peca5.imagem,peca6.imagem,peca7.imagem,peca8.imagem,peca9.imagem,peca10.imagem,peca11.imagem,peca12.imagem)
 
 				#posicionando os avatares
 				screen.tela.blit(avatar1.imagem,avatar1.posicao)
