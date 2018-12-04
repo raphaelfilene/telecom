@@ -512,6 +512,10 @@ class Tabuleiro:
 						if self.jogador_da_vez == 1 and self.configuracao[yo][xo] == 0:
 							posicoes_adjacentes.append([xo,yo])
 
+							if y == 6:
+								if self.configuracao[yo-1][xo] == 0:
+									posicoes_adjacentes.append([xo,yo-1])
+
 					xo = x+1
 					yo = y-1
 
@@ -541,6 +545,10 @@ class Tabuleiro:
 					if xo in xrange(8) and yo in xrange(8):
 						if self.jogador_da_vez == -1 and self.configuracao[yo][xo] == 0:
 							posicoes_adjacentes.append([xo,yo])
+
+							if y == 1:
+								if self.configuracao[yo+1][xo] == 0:
+									posicoes_adjacentes.append([xo,yo+1])
 
 					xo = x+1
 					yo = y+1
@@ -1054,7 +1062,7 @@ class Tabuleiro:
 						if self.jogador_da_vez == 1 and self.configuracao[yo][xo]%2 == 0:
 							posicoes_adjacentes.append([xo,yo])
 						elif self.jogador_da_vez == -1 and (self.configuracao[yo][xo]%2 == 1 or self.configuracao[yo][xo] == 0):
-							posicoes_adjacentes.append([xo,yo])	
+							posicoes_adjacentes.append([xo,yo])
 
 					for xp,yp in posicoes_adjacentes:
 						if self.jogador_da_vez == 1:
@@ -1065,6 +1073,139 @@ class Tabuleiro:
 								self.locais_casas_possiveis.append([xp,yp])
 							elif self.configuracao[yp][xp]%2 != 0:
 								self.locais_casas_possiveis.append([xp,yp])
+
+					temp_casas_possiveis = self.locais_casas_possiveis
+					temp = [x,y]
+					temp_novas_casas_possiveis = temp_casas_possiveis + []
+
+					for m in temp_casas_possiveis:
+						if self.jogador_da_vez == 1:
+							self.jogador_da_vez = -1
+							for i in range(8):
+								for j in range(8):
+									if self.configuracao[j][i] %2 != 1 and self.configuracao[j][i] != 0 and self.configuracao[j][i] != 14:
+										self.local_casa_atual = [i,j]
+										temp_peca = self.configuracao[m[1]][m[0]]
+										self.configuracao[m[1]][m[0]] = 13
+										self.set_casas_possiveis_prox_movimento()
+										for k in self.locais_casas_possiveis:
+											if k == m:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+										self.configuracao[m[1]][m[0]] = temp_peca
+
+									if self.configuracao[j][i] %2 != 1 and self.configuracao[j][i] != 0 and self.configuracao[j][i] == 14:
+										for k in temp_novas_casas_possiveis:
+											if k == [i+1,j-1]:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+											if k == [i+1,j]:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+											if k == [i+1,j+1]:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+											if k == [i,j-1]:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+											if k == [i,j+1]:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+											if k == [i-1,j-1]:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+											if k == [i-1,j]:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+											if k == [i-1,j+1]:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+
+							self.local_casa_atual = temp
+							self.jogador_da_vez = 1
+
+						if self.jogador_da_vez == -1:
+							self.jogador_da_vez = 1
+							for i in range(8):
+								for j in range(8):
+									if self.configuracao[j][i] %2 != 0 and self.configuracao[j][i] != 13:
+										self.local_casa_atual = [i,j]
+										temp_peca = self.configuracao[m[1]][m[0]]
+										self.configuracao[m[1]][m[0]] = 14
+										self.set_casas_possiveis_prox_movimento()
+										for k in self.locais_casas_possiveis:
+											if k == m:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+										self.configuracao[m[1]][m[0]] = temp_peca
+
+									if self.configuracao[j][i] %2 != 0 and self.configuracao[j][i] == 13:
+										for k in temp_novas_casas_possiveis:
+											if k == [i+1,j-1]:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+											if k == [i+1,j]:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+											if k == [i+1,j+1]:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+											if k == [i,j-1]:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+											if k == [i,j+1]:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+											if k == [i-1,j-1]:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+											if k == [i-1,j]:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+											if k == [i-1,j+1]:
+												try:
+													temp_novas_casas_possiveis.remove(k)
+												except:
+													pass
+
+							self.local_casa_atual = temp
+							self.jogador_da_vez = -1
+							
+					self.locais_casas_possiveis = temp_novas_casas_possiveis
 
 			else:
 				return []
