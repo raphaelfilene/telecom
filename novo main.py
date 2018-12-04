@@ -217,6 +217,12 @@ class Tabuleiro:
 		self.local_casa_selecionada=None
 		self.locais_casas_possiveis=[]
 
+		self.wcheck=False
+		self.bcheck=False
+
+		self.rei_branco = []
+		self.rei_preto = []
+
 	def desenhar_pecas(self,screen,peca1,peca2,peca3,peca4,peca5=None,peca6=None,peca7=None,peca8=None,peca9=None,peca10=None,peca11=None,peca12=None):
 		#desenhando as casas no tabuleiro
 		for x in xrange(1,self.qtd_casas[0]+1):
@@ -249,8 +255,7 @@ class Tabuleiro:
 						x_p,y_p=self.posicao[0],self.posicao[1]
 						x_p+=(x+1.5)*self.dimensoes_casas[0]-0.5*peca.get_width()
 						y_p+=(y+1.5)*self.dimensoes_casas[1]-0.5*peca.get_height()
-						screen.tela.blit(peca,[int(x_p),int(y_p)])					
-
+						screen.tela.blit(peca,[int(x_p),int(y_p)])
 
 	def analisar_comando(self,comando):
 
@@ -268,6 +273,12 @@ class Tabuleiro:
 								x_over=j
 								break
 						break
+
+				if self.jogo_escolhido == 2:
+					if x_over > 8:
+						x_over = 8
+					if y_over > 8:
+						y_over = 8
 
 				self.local_casa_selecionada = [x_over,y_over]
 
@@ -308,7 +319,6 @@ class Tabuleiro:
 						self.local_casa_atual = [x_over,y_over]
 
 					self.set_casas_possiveis_prox_movimento()
-					print u'\nPosições válidas: %s\n'%(self.locais_casas_possiveis)
 
 					condicao_vitoria = 0
 
@@ -333,23 +343,290 @@ class Tabuleiro:
 				#lógica de xadrez
 				if self.jogo_escolhido == 2:
 
-					if [x_over,y_over] in self.locais_casas_possiveis:
+					if self.wcheck == False and self.bcheck == False:
 
-						xo,yo=self.local_casa_atual
-						self.configuracao[y_over][x_over] = self.configuracao[yo][xo]
-						self.configuracao[yo][xo] = 0
-						self.local_casa_atual = None
-						self.jogador_da_vez = -1*self.jogador_da_vez
+						if [x_over,y_over] in self.locais_casas_possiveis:
 
-					elif (self.configuracao[x_over][y_over]%2 == 1 and self.jogador_da_vez == 1) or (self.configuracao[x_over][y_over]%2 == 0 and self.jogador_da_vez == -1):
-						self.local_casa_selecionada = [x_over,y_over]
-						self.local_casa_atual = [x_over,y_over]
+							xo,yo=self.local_casa_atual
+							self.configuracao[y_over][x_over] = self.configuracao[yo][xo]
+							self.configuracao[yo][xo] = 0
+							self.jogador_da_vez = -1*self.jogador_da_vez
 
-					else:
-						self.local_casa_atual = [x_over,y_over]
+						elif (self.configuracao[x_over][y_over]%2 == 1 and self.jogador_da_vez == 1) or (self.configuracao[x_over][y_over]%2 == 0 and self.jogador_da_vez == -1):
+							self.local_casa_selecionada = [x_over,y_over]
+							self.local_casa_atual = [x_over,y_over]
 
-					self.set_casas_possiveis_prox_movimento()
-					print u'\nPosições válidas: %s\n'%(self.locais_casas_possiveis)
+						else:
+							self.local_casa_atual = [x_over,y_over]
+
+						temp_local = self.local_casa_atual
+						temp_selecionada = self.local_casa_selecionada
+
+						#pega a localização atual dos dois reis
+						for i in xrange(8):
+							for j in xrange(8):
+								if self.wcheck == False:
+									if self.configuracao[j][i] == 13:
+										self.local_casa_atual = [i,j]
+										self.rei_branco = [i,j]
+
+								if self.bcheck == False:
+									if self.configuracao[j][i] == 14:
+										self.local_casa_atual = [i,j]
+										self.rei_preto = [i,j]
+										
+						a = self.jogador_da_vez
+
+						#verifica se algum rei está em xeque
+						for i in xrange(8):
+							for j in xrange(8):
+								if self.configuracao[j][i] %2 != 1 and self.configuracao[j][i] != 0 and self.configuracao[j][i] != 14:
+									self.jogador_da_vez = -1
+									self.local_casa_atual = [i,j]
+									self.set_casas_possiveis_prox_movimento()
+									if self.rei_branco in self.locais_casas_possiveis:
+										self.wcheck = True
+									self.jogador_da_vez = 1
+
+								if self.configuracao[j][i] %2 != 0 and self.configuracao[j][i] != 13:
+									self.jogador_da_vez = 1
+									self.local_casa_atual = [i,j]
+									self.set_casas_possiveis_prox_movimento()
+									if self.rei_preto in self.locais_casas_possiveis:
+										self.bcheck = True
+									self.jogador_da_vez = -1
+
+						self.jogador_da_vez = a
+						self.local_casa_atual = temp_local
+
+						self.set_casas_possiveis_prox_movimento()
+
+					if self.wcheck == True:
+
+						if [x_over,y_over] in self.locais_casas_possiveis:
+
+							xo,yo=self.local_casa_atual
+							self.configuracao[y_over][x_over] = self.configuracao[yo][xo]
+							self.configuracao[yo][xo] = 0
+							self.jogador_da_vez = -1*self.jogador_da_vez
+
+						elif (self.configuracao[x_over][y_over]%2 == 1 and self.jogador_da_vez == 1) or (self.configuracao[x_over][y_over]%2 == 0 and self.jogador_da_vez == -1):
+							self.local_casa_selecionada = [x_over,y_over]
+							self.local_casa_atual = [x_over,y_over]
+
+						else:
+							self.local_casa_atual = [x_over,y_over]
+
+						self.set_casas_possiveis_prox_movimento()
+
+						temp_locais_casas_possiveis = self.locais_casas_possiveis + []
+						temp_casa_atual = self.local_casa_atual + []
+
+						for k in self.locais_casas_possiveis:
+							for i in xrange(8):
+								for j in xrange(8):
+									if self.configuracao[j][i] %2 != 1 and self.configuracao[j][i] != 0 and self.configuracao[j][i] != 14:
+										self.jogador_da_vez *= -1
+										self.local_casa_atual = [i,j]
+
+										temp = self.configuracao[k[1]][k[0]]
+
+										k_temp = self.rei_branco + []
+
+										if self.configuracao[temp_casa_atual[1]][temp_casa_atual[0]] == 13:
+											self.rei_branco = k
+
+										self.configuracao[k[1]][k[0]] = self.configuracao[temp_casa_atual[1]][temp_casa_atual[0]]
+										self.configuracao[temp_casa_atual[1]][temp_casa_atual[0]] = 0
+										self.set_casas_possiveis_prox_movimento()
+
+										if self.rei_branco in self.locais_casas_possiveis:
+											try:
+												temp_locais_casas_possiveis.remove(k)
+											except:
+												pass
+
+										self.configuracao[temp_casa_atual[1]][temp_casa_atual[0]] = self.configuracao[k[1]][k[0]]
+										self.configuracao[k[1]][k[0]] = temp
+										self.jogador_da_vez *= -1
+										self.rei_branco = k_temp
+
+						self.locais_casas_possiveis = temp_locais_casas_possiveis
+						self.local_casa_atual = temp_casa_atual
+
+						jogadas_possiveis = []
+
+						for l in xrange(8):
+							for m in xrange(8):
+								self.local_casa_atual = [l,m]
+								self.set_casas_possiveis_prox_movimento()
+
+								temp_locais_casas_possiveis2 = self.locais_casas_possiveis + []
+								temp_casa_atual2 = self.local_casa_atual + []
+
+								for k in self.locais_casas_possiveis:
+									for i in xrange(8):
+										for j in xrange(8):
+											if self.configuracao[j][i] %2 != 1 and self.configuracao[j][i] != 0 and self.configuracao[j][i] != 14:
+												self.jogador_da_vez *= -1
+												self.local_casa_atual = [i,j]
+
+												temp = self.configuracao[k[1]][k[0]]
+
+												k_temp = self.rei_branco + []
+
+												if self.configuracao[temp_casa_atual2[1]][temp_casa_atual2[0]] == 13:
+													self.rei_branco = k
+
+												self.configuracao[k[1]][k[0]] = self.configuracao[temp_casa_atual2[1]][temp_casa_atual2[0]]
+												self.configuracao[temp_casa_atual2[1]][temp_casa_atual2[0]] = 0
+												self.set_casas_possiveis_prox_movimento()
+
+												if self.rei_branco in self.locais_casas_possiveis:
+													try:
+														temp_locais_casas_possiveis2.remove(k)
+													except:
+														pass
+
+												self.configuracao[temp_casa_atual2[1]][temp_casa_atual2[0]] = self.configuracao[k[1]][k[0]]
+												self.configuracao[k[1]][k[0]] = temp
+												self.jogador_da_vez *= -1
+												self.rei_branco = k_temp
+
+								self.locais_casas_possiveis = temp_locais_casas_possiveis2
+								self.local_casa_atual = temp_casa_atual2
+
+								jogadas_possiveis.append(self.locais_casas_possiveis)
+
+						contador_xadrez = 0
+
+						for jogada in jogadas_possiveis:
+							if jogada != []:
+								break
+							else:
+								contador_xadrez += 1
+
+						if contador_xadrez == 64:
+							self.jogador_da_vez = 0
+							print "Xeque-mate; vitória do jogador 2"
+
+						self.locais_casas_possiveis = temp_locais_casas_possiveis
+						self.local_casa_atual = temp_casa_atual
+
+					if self.bcheck == True:
+
+						if [x_over,y_over] in self.locais_casas_possiveis:
+
+							xo,yo=self.local_casa_atual
+							self.configuracao[y_over][x_over] = self.configuracao[yo][xo]
+							self.configuracao[yo][xo] = 0
+							self.jogador_da_vez = -1*self.jogador_da_vez
+
+						elif (self.configuracao[x_over][y_over]%2 == 1 and self.jogador_da_vez == 1) or (self.configuracao[x_over][y_over]%2 == 0 and self.jogador_da_vez == -1):
+							self.local_casa_selecionada = [x_over,y_over]
+							self.local_casa_atual = [x_over,y_over]
+
+						else:
+							self.local_casa_atual = [x_over,y_over]
+
+						self.set_casas_possiveis_prox_movimento()
+
+						temp_locais_casas_possiveis = self.locais_casas_possiveis + []
+						temp_casa_atual = self.local_casa_atual + []
+
+						for k in self.locais_casas_possiveis:
+							for i in xrange(8):
+								for j in xrange(8):
+									if self.configuracao[j][i] %2 != 0 and self.configuracao[j][i] != 14:
+										self.jogador_da_vez *= -1
+										self.local_casa_atual = [i,j]
+
+										temp = self.configuracao[k[1]][k[0]]
+
+										k_temp = self.rei_preto + []
+
+										if self.configuracao[temp_casa_atual[1]][temp_casa_atual[0]] == 14:
+											self.rei_preto = k
+
+										self.configuracao[k[1]][k[0]] = self.configuracao[temp_casa_atual[1]][temp_casa_atual[0]]
+										self.configuracao[temp_casa_atual[1]][temp_casa_atual[0]] = 0
+										self.set_casas_possiveis_prox_movimento()
+
+										if self.rei_preto in self.locais_casas_possiveis:
+											try:
+												temp_locais_casas_possiveis.remove(k)
+											except:
+												pass
+
+										self.configuracao[temp_casa_atual[1]][temp_casa_atual[0]] = self.configuracao[k[1]][k[0]]
+										self.configuracao[k[1]][k[0]] = temp
+										self.jogador_da_vez *= -1
+										self.rei_preto = k_temp
+
+						self.locais_casas_possiveis = temp_locais_casas_possiveis
+						self.local_casa_atual = temp_casa_atual
+
+						jogadas_possiveis = []
+
+						for l in xrange(8):
+							for m in xrange(8):
+								self.local_casa_atual = [l,m]
+								self.set_casas_possiveis_prox_movimento()
+
+								temp_locais_casas_possiveis2 = self.locais_casas_possiveis + []
+								temp_casa_atual2 = self.local_casa_atual + []
+
+								for k in self.locais_casas_possiveis:
+									for i in xrange(8):
+										for j in xrange(8):
+											if self.configuracao[j][i] %2 != 0 and self.configuracao[j][i] != 14:
+												self.jogador_da_vez *= -1
+												self.local_casa_atual = [i,j]
+
+												temp = self.configuracao[k[1]][k[0]]
+
+												k_temp = self.rei_preto + []
+
+												if self.configuracao[temp_casa_atual2[1]][temp_casa_atual2[0]] == 14:
+													self.rei_preto = k
+
+												self.configuracao[k[1]][k[0]] = self.configuracao[temp_casa_atual2[1]][temp_casa_atual2[0]]
+												self.configuracao[temp_casa_atual2[1]][temp_casa_atual2[0]] = 0
+												self.set_casas_possiveis_prox_movimento()
+
+												if self.rei_preto in self.locais_casas_possiveis:
+													try:
+														temp_locais_casas_possiveis2.remove(k)
+													except:
+														pass
+
+												self.configuracao[temp_casa_atual2[1]][temp_casa_atual2[0]] = self.configuracao[k[1]][k[0]]
+												self.configuracao[k[1]][k[0]] = temp
+												self.jogador_da_vez *= -1
+												self.rei_preto = k_temp
+
+								self.locais_casas_possiveis = temp_locais_casas_possiveis2
+								self.local_casa_atual = temp_casa_atual2
+
+								jogadas_possiveis.append(self.locais_casas_possiveis)
+
+						contador_xadrez = 0
+
+						for jogada in jogadas_possiveis:
+							if jogada != []:
+								break
+							else:
+								contador_xadrez += 1
+
+						if contador_xadrez == 64:
+							self.jogador_da_vez = 0
+							print "Xeque-mate; vitória do jogador 1"
+
+						self.locais_casas_possiveis = temp_locais_casas_possiveis
+						self.local_casa_atual = temp_casa_atual
+
+					self.wcheck = False
+					self.bcheck = False
 
 	def set_casas_possiveis_prox_movimento(self):
 		self.locais_casas_possiveis=[]
