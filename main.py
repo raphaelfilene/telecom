@@ -693,8 +693,8 @@ class Tabuleiro:
 				posicoes_adjacentes=[]
 
 				for a,b in [[-1,-1],[-1,1],[1,-1],[1,1]]:
-					xo=xo+a
-					yo=yo+b
+					xo=x+a
+					yo=y+b
 
 					while (9>=xo>=0 and 9>=yo>=0):
 						if self.configuracao[yo][xo]==0:
@@ -910,8 +910,8 @@ class Tabuleiro:
 					posicoes_adjacentes=[]
 
 					for a,b in [[-1,-1],[-1,1],[1,-1],[1,1]]:
-						xo=xo+a
-						yo=yo+b
+						xo=x+a
+						yo=y+b
 
 						while(7>=xo>=0 and 7>=yo>=0):
 							if self.configuracao[yo][xo] == 0:
@@ -1127,22 +1127,8 @@ class Peca: #Peça
 
 		self.imagem=peca
 
-#1 para damas; 2 para xadrez
-jogo_selecionado = 2
-
 screen=Janela()
 jogo=Jogo(pytime)
-
-tab=Tabuleiro([10,10],screen.dimensao,jogo_selecionado)
-
-chars=range(1,len(Avatar.nomes)+1)
-char1=random.choice(chars)
-chars.remove(char1)
-char2=random.choice(chars)
-
-avatar1=Avatar(char1,screen.dimensao,player=1)
-avatar2=Avatar(char2,screen.dimensao,player=-1)
-
 
 #configurando fontes das legendas das telas iniciais e dos menus
 diretorio_fonte='fontes/Starjedi.ttf'
@@ -1193,6 +1179,16 @@ while escolhendo_jogo:
 	display.update()
 	screen.tela.fill((0,0,0))
 jogo_selecionado+=1
+
+tab=Tabuleiro([10,10],screen.dimensao,jogo_selecionado)
+
+chars=range(1,len(Avatar.nomes)+1)
+char1=random.choice(chars)
+chars.remove(char1)
+char2=random.choice(chars)
+
+avatar1=Avatar(char1,screen.dimensao,player=1)
+avatar2=Avatar(char2,screen.dimensao,player=-1)
 
 if jogo_selecionado == 1:
 	pecas=range(1,5)
