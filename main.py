@@ -20,7 +20,7 @@ from time import time,sleep
 class Janela:
 	u'''Esta classe trabalhará as propriedades básicas da janela do jogo'''
 	#ícone do jogo
-	icone=image.load('imagens/icone.png')
+	icone=image.load('temas/icone.png')
 	
 	#título da janela
 	nome='Jogo de Damas com Processamento de Voz'
@@ -45,7 +45,7 @@ class Janela:
 		self.tela=display.set_mode((self.dimensao),[RESIZABLE,FULLSCREEN][self.fullscreen])
 
 		#desenhando o fundo
-		fundo=image.load('imagens/fundo.jpg').convert()
+		fundo=image.load('temas/fundo.jpg').convert()
 		tam_fundo=fundo.get_size()
 		tam_fundo=[self.dimensao[0],(tam_fundo[1]*self.dimensao[0])/tam_fundo[0]]
 		self.fundo=transform.scale(fundo,tam_fundo)
@@ -88,7 +88,7 @@ class Jogo:
 
 class Tabuleiro:
 	margens=[0.23,0.15,0.02,0.15] #esquerda, cima, direita, baixo
-	casas=[image.load('imagens/piso1.jpg'),image.load('imagens/piso2.jpg')]
+	casas=[image.load('temas/piso1.jpg'),image.load('temas/piso2.jpg')]
 	jogador_da_vez=1
 	tamanho_fonte=24
 	fonte='arial'
@@ -223,7 +223,7 @@ class Tabuleiro:
 		self.rei_branco = []
 		self.rei_preto = []
 
-	def desenhar_pecas(self,screen,peca1,peca2,peca3,peca4,peca5=None,peca6=None,peca7=None,peca8=None,peca9=None,peca10=None,peca11=None,peca12=None):
+	def desenhar_pecas(self,screen,pecas,jogo_selecionado):
 		#desenhando as casas no tabuleiro
 		for x in xrange(1,self.qtd_casas[0]+1):
 			for y in xrange(1,self.qtd_casas[1]+1):
@@ -242,20 +242,19 @@ class Tabuleiro:
 		#desenhando as peças
 		for y in xrange(self.qtd_casas[1]):
 			for x in xrange(self.qtd_casas[0]):
-				if peca5 == None:
-					peca=[None,peca1,peca2,peca3,peca4][self.configuracao[y][x]]
+				if jogo_selecionado==1:
+					peca=[None,['dama',0],['super_dama',0],['dama',1],['super_dama',1]][self.configuracao[y][x]]
 					if peca:
-						x_p,y_p=self.posicao[0],self.posicao[1]
-						x_p+=(x+1.5)*self.dimensoes_casas[0]-0.5*peca.get_width()
-						y_p+=(y+1.5)*self.dimensoes_casas[1]-0.5*peca.get_height()
-						screen.tela.blit(peca,[int(x_p),int(y_p)])
+						peca,player=peca
 				else:
-					peca=[peca1,peca2,peca3,peca4,peca5,peca6,peca7,peca8,peca9,peca10,peca11,peca12,None,None,None,None][self.configuracao[y][x]-3]
-					if peca:
-						x_p,y_p=self.posicao[0],self.posicao[1]
-						x_p+=(x+1.5)*self.dimensoes_casas[0]-0.5*peca.get_width()
-						y_p+=(y+1.5)*self.dimensoes_casas[1]-0.5*peca.get_height()
-						screen.tela.blit(peca,[int(x_p),int(y_p)])
+					peca=['peao','peao','torre','torre','cavalo','cavalo','bispo','bispo','rainha','rainha','rei','rei',None,None,None,None][self.configuracao[y][x]-3]
+					player=self.configuracao[y][x]%2
+				if peca:
+					peca=pecas.imagens[peca][player]
+					x_p,y_p=self.posicao[0],self.posicao[1]
+					x_p+=(x+1.5)*self.dimensoes_casas[0]-0.5*peca.get_width()
+					y_p+=(y+1.5)*self.dimensoes_casas[1]-0.5*peca.get_height()
+					screen.tela.blit(peca,[int(x_p),int(y_p)])
 
 	def analisar_comando(self,comando):
 
@@ -1056,94 +1055,189 @@ class Tabuleiro:
 
 class Avatar:
 	dimensao_percentual=0.18
-	nomes=['Chewbacca','Yoda','Darth Vader','Han Solo']
 	tamanho_fonte=24
 	fonte='arial'
 	negrito=1
 	italico=0
-	cores=[(255,255,0),(0,255,0),(255,0,0),(0,0,255)] #cores para os avatares
+	cores=[(255,0,0),(0,0,255)] #cores para os avatares
 	posicao_percentual_tela=[0.01,0.1]
-	def __init__(self,numero_avatar,dimensao_tela,player):
+	def __init__(self,tema_escolhido,dimensao_tela):
+		nomes=open('temas/%s/avatares.txt'%(tema_escolhido),'r').read().splitlines()
+
 		#dimensão do avatar
 		self.dimensao=[int(self.dimensao_percentual*dimensao_tela[0]),int(self.dimensao_percentual*dimensao_tela[1])]
 
-		#capturando e convertendo a imagem para um formato mais rápido e com as dimensões desejadas sem distorcê-la
-		avatar=image.load('imagens/char%s.jpg'%numero_avatar).convert()
-		xo,yo=avatar.get_size() #dimensões originais
-		x,y=self.dimensao #dimensões desejadas
-		if float(xo)/x>float(yo)/y:
-			L=int(y*xo/float(yo))
-			avatar=transform.scale(avatar,[L,y])
-			avatar=avatar.subsurface([(L-x)/2,0,x,y])
-		else:
-			H=int(x*yo/float(xo))
-			avatar=transform.scale(avatar,[x,H])
-			avatar=avatar.subsurface([0,(H-y)/2,x,y])
+		self.avatares=[]
+		self.imagens=[]
+		self.posicoes=[]
+		
+		for player in [1,2]:
+			#capturando e convertendo a imagem para um formato mais rápido e com as dimensões desejadas sem distorcê-la
+			try:
+				avatar=image.load('temas/%s/avatar%s.jpg'%(tema_escolhido,player)).convert()
+			except:
+				avatar=image.load('temas/%s/avatar%s.png'%(tema_escolhido,player)).convert_alpha()
+			
+			xo,yo=avatar.get_size() #dimensões originais
+			x,y=self.dimensao #dimensões desejadas
 
-		#criando a legenda com o nome
-		legenda=font.SysFont(self.fonte,self.tamanho_fonte,self.negrito,self.italico).render(self.nomes[numero_avatar-1],1,self.cores[numero_avatar-1])
+			if float(xo)/x>float(yo)/y:
+				L=int(y*xo/float(yo))
+				avatar=transform.scale(avatar,[L,y])
+				avatar=avatar.subsurface([(L-x)/2,0,x,y])
+			else:
+				H=int(x*yo/float(xo))
+				avatar=transform.scale(avatar,[x,H])
+				avatar=avatar.subsurface([0,(H-y)/2,x,y])
 
-		#superfície com o avatar e a legenda
-		self.imagem=Surface((x,y+legenda.get_height()))
-		self.imagem.set_colorkey(0)
-		posicao_legenda_x=(x-legenda.get_width())/2 #é uma posição relativa à superfície que contém a legenda e o avatar
+			#criando a legenda com o nome
+			legenda=font.SysFont(self.fonte,self.tamanho_fonte,self.negrito,self.italico).render(nomes[player-1],1,self.cores[player-1])
 
-		if player==1:
-			self.imagem.blit(avatar,(0,0))
-			self.imagem.blit(legenda,(posicao_legenda_x,y))
-		else:
-			self.imagem.blit(legenda,(posicao_legenda_x,0))
-			self.imagem.blit(avatar,(0,legenda.get_height()))
+			#superfície com o avatar e a legenda
+			imagem=Surface((x,y+legenda.get_height()))
+			imagem.set_colorkey(0)
+			posicao_legenda_x=(x-legenda.get_width())/2 #é uma posição relativa à superfície que contém a legenda e o avatar
 
-		#posição relativa a tela
-		l,h=[int(a*b) for a,b in zip(self.posicao_percentual_tela,dimensao_tela)]
-		if player==1:
-			self.posicao=(l,h)
-		else:
-			self.posicao=(l,dimensao_tela[1]-h-self.imagem.get_height())
+			if player==1:
+				imagem.blit(avatar,(0,0))
+				imagem.blit(legenda,(posicao_legenda_x,y))
+			else:
+				imagem.blit(legenda,(posicao_legenda_x,0))
+				imagem.blit(avatar,(0,legenda.get_height()))
+
+			#posição relativa a tela
+			l,h=[int(a*b) for a,b in zip(self.posicao_percentual_tela,dimensao_tela)]
+			if player==1:
+				posicao=(l,h)
+			else:
+				posicao=(l,dimensao_tela[1]-h-imagem.get_height())
+
+			self.avatares.append(avatar)
+			self.imagens.append(imagem)
+			self.posicoes.append(posicao)
 
 class Peca: #Peça
 	dimensao_percentual=0.9
-	def __init__(self,numero_peca,dimensao_casa,player,jogo):
+	def __init__(self,tema_escolhido,dimensao_casa):
 		#dimensão de cada peça
 		self.dimensao=[int(self.dimensao_percentual*dimensao_casa[0]),int(self.dimensao_percentual*dimensao_casa[1])]
 
-		if jogo == 1:
-			#capturando e convertendo a imagem para um formato mais rápido e com as dimensões desejadas sem distorcê-la
-			peca=image.load('imagens/helm%s.png'%numero_peca).convert_alpha()
+		pecas=dict()
 
-		if jogo == 2:
-			peca=image.load('imagens/xadrez%s.png'%numero_peca).convert_alpha()
+		for i in ['dama','super_dama','peao','torre','cavalo','bispo','rei','rainha']:
+			pecas[i]=[]
+			for j in [1,2]:
+				try:
+					img=image.load('temas/%s/%s%s.jpg'%(tema_escolhido,i,j))
+					img.convert()
+				except:
+					img=image.load('temas/%s/%s%s.png'%(tema_escolhido,i,j))
+					img.convert_alpha()
 
-		xo,yo=peca.get_size() #dimensões originais
-		x,y=self.dimensao #dimensões desejadas
+				xo,yo=img.get_size() #dimensões originais
+				x,y=self.dimensao #dimensões desejadas
+				kx,ky=x/float(xo),y/float(yo)
+				
 
-		if float(xo)/x>float(yo)/y:
-			L=int(y*xo/float(yo))
-			peca=transform.scale(peca,[L,y])
-		else:
-			H=int(x*yo/float(xo))
-			peca=transform.scale(peca,[x,H])
+				if ky<=kx:
+					L=int(xo*ky)
+					img=transform.scale(img,[L,y])
+				else:
+					H=int(yo*kx)
+					img=transform.scale(img,[x,H])
 
-		self.imagem=peca
+				pecas[i].append(img)
+
+		self.imagens=pecas
 
 screen=Janela()
 jogo=Jogo(pytime)
+diretorio_inicial=os.getcwd()
+temas=[]
+for i in os.listdir('%s/temas'%diretorio_inicial):
+	if '.' not in i:
+		temas.append(i)
 
-#configurando fontes das legendas das telas iniciais e dos menus
-diretorio_fonte='fontes/Starjedi.ttf'
-
+#configurando fontes dos menus iniciais
 negrito=1
 italico=0
 cor=(214,197,2)
 
+
+##########################################
+#criando menu de seleção do tema
+#configurando fontes das legendas das telas iniciais e dos menus
+tam=25
+tam2=30
+
+selecionador=font.SysFont('arial',tam2,negrito,italico).render('>',1,cor)
+legenda_selecao=font.SysFont('arial',tam,negrito,italico).render('Escolha o tema com o qual desejas jogar:',1,cor)
+posicao_legenda_selecao=[int(0.5*screen.dimensao[0]-0.5*legenda_selecao.get_width()),int(0.22*screen.dimensao[1])]
+
+posicoes=[]
+legendas=[]
+posicoes_selecionador=[]
+for tema in temas:
+	legenda=font.SysFont('arial',tam,negrito,italico).render(tema,1,cor)
+	posicao=[int(0.5*screen.dimensao[0]-0.5*legenda.get_width()),int(0.22*screen.dimensao[1]+1.5*(1+len(posicoes_selecionador))*legenda.get_height())]
+	if len(posicoes_selecionador):
+		posicao_selecionador=[posicoes_selecionador[0][0],int(posicao[1]-0.2*selecionador.get_height())]
+	else:
+		posicao_selecionador=[int(posicao[0]-0.4*legenda.get_width()),int(posicao[1]-0.2*selecionador.get_height())]
+	posicoes.append(posicao)
+	legendas.append(legenda)
+	posicoes_selecionador.append(posicao_selecionador)
+
+indice_tema_selecionado=0
+escolhendo_tema=True
+while escolhendo_tema:
+	for evento in event.get():
+		if evento.type==QUIT:
+			jogo.quit()
+		if evento.type==KEYDOWN:
+			if evento.key==K_UP:
+				indice_tema_selecionado=max(0,indice_tema_selecionado-1)
+			elif evento.key==K_DOWN:
+				indice_tema_selecionado=min(indice_tema_selecionado+1,len(temas)-1)
+			elif evento.key==13: #13 é o código do ENTER no pygame
+				escolhendo_tema=False
+				break
+	screen.tela.blit(legenda_selecao,posicao_legenda_selecao)
+	for i in xrange(len(temas)):
+		screen.tela.blit(legendas[i],posicoes[i])
+	
+	screen.tela.blit(selecionador,posicoes_selecionador[indice_tema_selecionado])
+
+	display.update()
+	screen.tela.fill((0,0,0))
+tema_escolhido=temas[indice_tema_selecionado]
+######################################
+
+
+##########################################
+fonte='arial'
+for i in os.listdir('%s/temas/%s'%(diretorio_inicial,tema_escolhido)):
+	if '.ttf' in i:
+		fonte=i
+		break
+
+
 #criando menu de seleção do jogo
+#configurando fontes das legendas das telas iniciais e dos menus
+diretorio_fonte='temas/%s/%s'%(tema_escolhido,fonte)
+
+
 tam1=30
-fonte1=font.Font(diretorio_fonte,tam1)
-
 tam2=50
-fonte2=font.Font(diretorio_fonte,tam2)
 
+if fonte!='arial':
+	fonte1=font.Font(diretorio_fonte,tam1)
+	fonte2=font.Font(diretorio_fonte,tam2)
+	incremento_altura=0.2
+else:
+	fonte1=font.SysFont('arial',tam1,negrito,italico)
+	fonte2=font.SysFont('arial',tam2,negrito,italico)
+	incremento_altura=0.0
 
 legenda1=fonte1.render('selecione o jogo desejado:',1,cor)
 pos1=[int(0.5*screen.dimensao[0]-0.5*legenda1.get_width()),int(0.22*screen.dimensao[1])]
@@ -1152,8 +1246,8 @@ pos2=[int(0.5*screen.dimensao[0]-0.5*legenda2.get_width()),int(0.22*screen.dimen
 legenda3=fonte2.render('xadrez',1,cor)
 pos3=[int(0.5*screen.dimensao[0]-0.5*legenda3.get_width()),int(0.22*screen.dimensao[1]+2*legenda2.get_height())]
 selecionador=font.SysFont('arial',tam2,negrito,italico).render('>',1,cor)
-pos_selecionador1=[int(pos2[0]-0.4*legenda2.get_width()),pos2[1]+0.2*selecionador.get_height()]
-pos_selecionador2=[pos_selecionador1[0],pos3[1]+0.2*selecionador.get_height()]
+pos_selecionador1=[int(pos2[0]-0.4*legenda2.get_width()),pos2[1]+incremento_altura*selecionador.get_height()]
+pos_selecionador2=[pos_selecionador1[0],pos3[1]+incremento_altura*selecionador.get_height()]
 
 jogo_selecionado=0
 escolhendo_jogo=True
@@ -1178,36 +1272,16 @@ while escolhendo_jogo:
 		screen.tela.blit(selecionador,pos_selecionador1)
 	display.update()
 	screen.tela.fill((0,0,0))
+######################################
+
+
+
 jogo_selecionado+=1
 
 tab=Tabuleiro([10,10],screen.dimensao,jogo_selecionado)
 
-chars=range(1,len(Avatar.nomes)+1)
-char1=random.choice(chars)
-chars.remove(char1)
-char2=random.choice(chars)
-
-avatar1=Avatar(char1,screen.dimensao,player=1)
-avatar2=Avatar(char2,screen.dimensao,player=-1)
-
-if jogo_selecionado == 1:
-	pecas=range(1,5)
-	peca1=random.choice(pecas)
-	pecas.remove(peca1)
-	peca2=random.choice(pecas)
-	pecas.remove(peca2)
-	peca3=random.choice(pecas)
-	pecas.remove(peca3)
-	peca4=random.choice(pecas)
-	pecas.remove(peca4)
-
-	peca1=Peca(peca1,tab.dimensoes_casas,1,1)
-	peca2=Peca(peca2,tab.dimensoes_casas,-1,1)
-	peca3=Peca(peca3,tab.dimensoes_casas,1,1)
-	peca4=Peca(peca4,tab.dimensoes_casas,-1,1)
-
-if jogo_selecionado == 2:
-	peca1,peca2,peca3,peca4,peca5,peca6,peca7,peca8,peca9,peca10,peca11,peca12=[Peca(i,tab.dimensoes_casas,[-1,1][i%2],2) for i in xrange(3,15)]
+avatares=Avatar(tema_escolhido,screen.dimensao)
+pecas=Peca(tema_escolhido,tab.dimensoes_casas)
 
 rec = sr.Recognizer() #instanciamos o módulo do reconhecedor
 
@@ -1283,15 +1357,11 @@ def jogar():
 				screen.tela.blit(tab.imagem,tab.posicao)
 				
 				#desenhando as peças
-				if jogo_selecionado == 1:
-					tab.desenhar_pecas(screen,peca1.imagem,peca2.imagem,peca3.imagem,peca4.imagem)
-
-				if jogo_selecionado == 2:
-					tab.desenhar_pecas(screen,peca1.imagem,peca2.imagem,peca3.imagem,peca4.imagem,peca5.imagem,peca6.imagem,peca7.imagem,peca8.imagem,peca9.imagem,peca10.imagem,peca11.imagem,peca12.imagem)
+				tab.desenhar_pecas(screen,pecas,jogo_selecionado)
 
 				#posicionando os avatares
-				screen.tela.blit(avatar1.imagem,avatar1.posicao)
-				screen.tela.blit(avatar2.imagem,avatar2.posicao)
+				for i in xrange(2):
+					screen.tela.blit(avatares.imagens[i],avatares.posicoes[i])
 
 		else: #enquanto o jogo ainda está iniciando:
 			screen.tela.blit(legenda1,pos1)
