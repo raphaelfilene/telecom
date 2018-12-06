@@ -243,7 +243,7 @@ class Tabuleiro:
 		for y in xrange(self.qtd_casas[1]):
 			for x in xrange(self.qtd_casas[0]):
 				if jogo_selecionado==1:
-					peca=[None,['dama',0],['super_dama',0],['dama',1],['super_dama',1]][self.configuracao[y][x]]
+					peca=[None,['dama',1],['super_dama',1],['super_dama',0],['dama',0]][self.configuracao[y][x]]
 					if peca:
 						peca,player=peca
 				else:
@@ -1224,13 +1224,12 @@ for i in os.listdir('%s/temas/%s'%(diretorio_inicial,tema_escolhido)):
 
 #criando menu de seleção do jogo
 #configurando fontes das legendas das telas iniciais e dos menus
-diretorio_fonte='temas/%s/%s'%(tema_escolhido,fonte)
-
 
 tam1=30
 tam2=50
 
 if fonte!='arial':
+	diretorio_fonte='temas/%s/%s'%(tema_escolhido,fonte)
 	fonte1=font.Font(diretorio_fonte,tam1)
 	fonte2=font.Font(diretorio_fonte,tam2)
 	incremento_altura=0.2
@@ -1320,22 +1319,29 @@ musica_fundo=mixer.Sound('som_fundo.ogg')
 musica_fundo.play()
 
 tam1=80
-fonte1=font.Font(diretorio_fonte,tam1)
-
 tam2=30
-fonte2=font.Font(diretorio_fonte,tam2)
+
+if fonte!='arial':
+	fonte1=font.Font(diretorio_fonte,tam1)
+	fonte2=font.Font(diretorio_fonte,tam2)
+else:
+	fonte1=font.SysFont('arial',tam1,negrito,italico)
+	fonte2=font.SysFont('arial',tam2,negrito,italico)
 
 legenda1=fonte1.render(['jogo de damas','jogo de xadrez'][jogo_selecionado-1],1,cor)
 pos1=[int(0.5*screen.dimensao[0]-0.5*legenda1.get_width()),int(0.2*screen.dimensao[1])]
 legenda2=fonte2.render('com processamento de voz',1,cor)
 pos2=[int(0.5*screen.dimensao[0]-0.5*legenda2.get_width()),int(0.22*screen.dimensao[1]+legenda1.get_height())]
 
+
 def jogar():
+	comando=''
 	while jogo.run:
 		#analisando os eventos que ocorreram no quadro atual
 		for evento in event.get():
-			if evento.type==QUIT:
+			if evento.type==QUIT or (evento.type==KEYDOWN and evento.key==K_ESCAPE):
 				jogo.quit()
+				sys.exit()
 
 		if jogo.tempo>tempo_para_iniciar:
 			
@@ -1344,6 +1350,10 @@ def jogar():
 				comando = raw_input("Digite posicao: ")
 
 				print comando
+
+				if comando in ['sair do jogo','sairdojogo']:
+					jogo.quit()
+					sys.exit()
 
 			else:
 				comando=''
