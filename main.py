@@ -237,7 +237,10 @@ class Tabuleiro:
 		#desenhando as casas que poderão ser alvos de escolha da peça selecionada
 		for local in self.locais_casas_possiveis:
 			x,y=local
-			self.imagem.blit(self.casa_possivel,[(x+1)*self.dimensoes_casas[0],(y+1)*self.dimensoes_casas[1]])		
+			self.imagem.blit(self.casa_possivel,[(x+1)*self.dimensoes_casas[0],(y+1)*self.dimensoes_casas[1]])
+
+		#desejando tabuleiro
+		screen.tela.blit(self.imagem,self.posicao)
 
 		#desenhando as peças
 		for y in xrange(self.qtd_casas[1]):
@@ -1152,16 +1155,50 @@ class Peca: #Peça
 
 screen=Janela()
 jogo=Jogo(pytime)
-diretorio_inicial=os.getcwd()
-temas=[]
-for i in os.listdir('%s/temas'%diretorio_inicial):
-	if '.' not in i:
-		temas.append(i)
+
+rec = sr.Recognizer() #instanciamos o módulo do reconhecedor
+
+def comando_de_voz(lingua='pt'):
+	#aplicando o reconhecedor de voz
+	try:
+		with sr.Microphone() as fala: #chamos a gravação do microphone de fala
+			rec.adjust_for_ambient_noise(fala)
+			frase = rec.listen(fala) #o metodo listen vai ouvir o que a gente falar e gravar na variavel frase
+			comando=rec.recognize_google(frase, language=lingua) #transformando nossa fala em texto
+			comando = comando.lower().replace(" ","")
+	except:
+		comando=u' (Não reconhecido)'
+	return comando
 
 #configurando fontes dos menus iniciais
 negrito=1
 italico=0
 cor=(214,197,2)
+
+def produzir_legenda(texto,regiao):
+	tam=20
+	negrito=0
+	italico=0
+	if regiao==2:
+		cor=(255,200,200)
+	else:
+		cor=(200,200,255)
+
+	legenda=font.SysFont('arial',tam,negrito,italico).render(texto,1,cor)
+	x=int(0.5*screen.dimensao[0]-0.5*legenda.get_width())
+	if regiao==0: #texto na parte de cima
+		y=int(0.05*screen.dimensao[1])
+	elif regiao==1:
+		y=int(0.05*screen.dimensao[1]+1.2*legenda.get_height())
+	else: #texto na parte de baixo
+		y=int(0.97*screen.dimensao[1]-legenda.get_height())
+	screen.tela.blit(legenda,[x,y])
+
+diretorio_inicial=os.getcwd()
+temas=[]
+for i in os.listdir('%s/temas'%diretorio_inicial):
+	if '.' not in i:
+		temas.append(i)
 
 
 ##########################################
@@ -1190,18 +1227,29 @@ for tema in temas:
 
 indice_tema_selecionado=0
 escolhendo_tema=True
+opcoes_temas=[i.lower().replace(' ','') for i in temas]
+
+inicio=True
+
 while escolhendo_tema:
 	for evento in event.get():
 		if evento.type==QUIT:
 			jogo.quit()
-		if evento.type==KEYDOWN:
-			if evento.key==K_UP:
-				indice_tema_selecionado=max(0,indice_tema_selecionado-1)
-			elif evento.key==K_DOWN:
-				indice_tema_selecionado=min(indice_tema_selecionado+1,len(temas)-1)
-			elif evento.key==13: #13 é o código do ENTER no pygame
-				escolhendo_tema=False
-				break
+
+	if not inicio:
+		comando=comando_de_voz()
+	else:
+		inicio=False
+		comando=' (nada)'
+	produzir_legenda(u'Pronuncie a opção desejada ou fale "sair" para sair do jogo:',0)
+	produzir_legenda('"Comando" entendido: %s'%comando,2)
+
+	if comando in opcoes_temas:
+		indice_tema_selecionado=opcoes_temas.index(comando)
+		escolhendo_tema=False
+	elif comando=='sair':
+		sys.exit()
+
 	screen.tela.blit(legenda_selecao,posicao_legenda_selecao)
 	for i in xrange(len(temas)):
 		screen.tela.blit(legendas[i],posicoes[i])
@@ -1238,11 +1286,20 @@ else:
 	fonte2=font.SysFont('arial',tam2,negrito,italico)
 	incremento_altura=0.0
 
-legenda1=fonte1.render('Selecione o jogo desejado:',1,cor)
+texto1='selecione o jogo desejado:'
+texto2='Damas'
+texto3='Xadrez'
+
+if tema_escolhido=='Star Wars':
+	texto1=texto1.lower()
+	texto2=texto2.lower()
+	texto3=texto3.lower()
+
+legenda1=fonte1.render(texto1,1,cor)
 pos1=[int(0.5*screen.dimensao[0]-0.5*legenda1.get_width()),int(0.22*screen.dimensao[1])]
-legenda2=fonte2.render('Damas',1,cor)
+legenda2=fonte2.render(texto2,1,cor)
 pos2=[int(0.5*screen.dimensao[0]-0.5*legenda2.get_width()),int(0.22*screen.dimensao[1]+2*legenda1.get_height())]
-legenda3=fonte2.render('Xadrez',1,cor)
+legenda3=fonte2.render(texto3,1,cor)
 pos3=[int(0.5*screen.dimensao[0]-0.5*legenda3.get_width()),int(0.22*screen.dimensao[1]+2*legenda2.get_height())]
 selecionador=font.SysFont('arial',tam2,negrito,italico).render('>',1,cor)
 pos_selecionador1=[int(pos2[0]-0.4*legenda2.get_width()),pos2[1]+incremento_altura*selecionador.get_height()]
@@ -1250,18 +1307,30 @@ pos_selecionador2=[pos_selecionador1[0],pos3[1]+incremento_altura*selecionador.g
 
 jogo_selecionado=0
 escolhendo_jogo=True
+inicio=True
+
 while escolhendo_jogo:
 	for evento in event.get():
 		if evento.type==QUIT:
 			jogo.quit()
-		if evento.type==KEYDOWN:
-			if evento.key==K_UP:
-				jogo_selecionado=0
-			elif evento.key==K_DOWN:
-				jogo_selecionado=1
-			elif evento.key==13: #13 é o código do ENTER no pygame
-				escolhendo_jogo=False
-				break
+
+	if not inicio:
+		comando=comando_de_voz()
+	else:
+		inicio=False
+		comando=' (nada)'
+	produzir_legenda(u'Pronuncie a opção desejada ou fale "sair" para sair do jogo:',0)
+	produzir_legenda('"Comando" entendido: %s'%comando,2)
+
+	if comando=='xadrez':
+		jogo_selecionado=1
+		escolhendo_jogo=False
+	elif comando=='damas':
+		jogo_selecionado=0
+		escolhendo_jogo=False
+	elif comando=='sair':
+		sys.exit()
+
 	screen.tela.blit(legenda1,pos1)
 	screen.tela.blit(legenda2,pos2)
 	screen.tela.blit(legenda3,pos3)
@@ -1273,29 +1342,12 @@ while escolhendo_jogo:
 	screen.tela.fill((0,0,0))
 ######################################
 
-
-
 jogo_selecionado+=1
 
 tab=Tabuleiro([10,10],screen.dimensao,jogo_selecionado)
 
 avatares=Avatar(tema_escolhido,screen.dimensao)
 pecas=Peca(tema_escolhido,tab.dimensoes_casas)
-
-rec = sr.Recognizer() #instanciamos o módulo do reconhecedor
-
-def comando_de_voz():
-	#aplicando o reconhecedor de voz
-	try:
-		with sr.Microphone() as fala: #chamos a gravação do microphone de fala
-			rec.adjust_for_ambient_noise(fala)
-			frase = rec.listen(fala) #o metodo listen vai ouvir o que a gente falar e gravar na variavel frase
-			comando=rec.recognize_google(frase, language='pt') #transformando nossa fala em texto
-			comando = comando.lower().replace(" ","")
-	except:
-		comando=u'Fala não reconhecida'
-	print u'\nVez do jogador %s\n'%tab.jogador_da_vez
-	return comando
 
 def rotinas():
 	u'''Agrupei nesta função as atividades que precisam ser "rodadas" ao final de cada quadro'''
@@ -1328,14 +1380,22 @@ else:
 	fonte1=font.SysFont('arial',tam1,negrito,italico)
 	fonte2=font.SysFont('arial',tam2,negrito,italico)
 
-legenda1=fonte1.render(['Jogo de Damas','Jogo de Xadrez'][jogo_selecionado-1],1,cor)
+texto1='Jogo de Damas'
+texto2='Jogo de Xadrez'
+texto3='com Processamento de Voz'
+if tema_escolhido=='Star Wars':
+	texto1=texto1.lower()
+	texto2=texto2.lower()
+	texto3=texto3.lower()
+
+legenda1=fonte1.render([texto1,texto2][jogo_selecionado-1],1,cor)
 pos1=[int(0.5*screen.dimensao[0]-0.5*legenda1.get_width()),int(0.2*screen.dimensao[1])]
-legenda2=fonte2.render('com Processamento de Voz',1,cor)
+legenda2=fonte2.render(texto3,1,cor)
 pos2=[int(0.5*screen.dimensao[0]-0.5*legenda2.get_width()),int(0.22*screen.dimensao[1]+legenda1.get_height())]
 
 
 def jogar():
-	comando=''
+	comando=' (nada)'
 	while jogo.run:
 		#analisando os eventos que ocorreram no quadro atual
 		for evento in event.get():
@@ -1344,39 +1404,32 @@ def jogar():
 				sys.exit()
 
 		if jogo.tempo>tempo_para_iniciar:
-			
-			if jogo.tempo>tempo_para_iniciar+1:
-				#comando=comando_de_voz()
-				comando = raw_input("Digite posicao: ")
+			produzir_legenda(u'Fale a opção desejada ou fale "sair do jogo" para sair do jogo:',0)
 
-				print comando
+			if jogo.tempo>tempo_para_iniciar+1:
+				comando=comando_de_voz()
 
 				if comando in ['sair do jogo','sairdojogo']:
 					jogo.quit()
 					sys.exit()
 
 			else:
-				comando=''
+				comando=' (nada)'
+			produzir_legenda('"Comando" entendido: %s'%comando,1)
 
-			#retira o delay no processo de colorir as peças
-			for i in range(2):
+			tab.analisar_comando(comando)
+			
+			#desenhando as peças e tabuleiro
+			tab.desenhar_pecas(screen,pecas,jogo_selecionado)
 
-				tab.analisar_comando(comando)
-				
-				#desenhando o tabuleiro
-				screen.tela.blit(tab.imagem,tab.posicao)
-				
-				#desenhando as peças
-				tab.desenhar_pecas(screen,pecas,jogo_selecionado)
-
-				#posicionando os avatares
-				for i in xrange(2):
-					screen.tela.blit(avatares.imagens[i],avatares.posicoes[i])
+			#posicionando os avatares
+			for i in xrange(2):
+				screen.tela.blit(avatares.imagens[i],avatares.posicoes[i])
 
 		else: #enquanto o jogo ainda está iniciando:
 			screen.tela.blit(legenda1,pos1)
 			screen.tela.blit(legenda2,pos2)
-				
+
 		#rotinas que preciso rodar toda vez que um quadro terminar
 		rotinas()
 
