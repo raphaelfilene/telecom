@@ -23,7 +23,7 @@ class Janela:
 	icone=image.load('temas/icone.png')
 	
 	#título da janela
-	nome='Jogo de Damas com Processamento de Voz'
+	nome='Jogo de Tabuleiro com Processamento de Voz'
 	
 	#tamanho da tela (largura x altura)
 	dimensao=[800,600]
@@ -1238,11 +1238,11 @@ else:
 	fonte2=font.SysFont('arial',tam2,negrito,italico)
 	incremento_altura=0.0
 
-legenda1=fonte1.render('selecione o jogo desejado:',1,cor)
+legenda1=fonte1.render('Selecione o jogo desejado:',1,cor)
 pos1=[int(0.5*screen.dimensao[0]-0.5*legenda1.get_width()),int(0.22*screen.dimensao[1])]
-legenda2=fonte2.render('damas',1,cor)
+legenda2=fonte2.render('Damas',1,cor)
 pos2=[int(0.5*screen.dimensao[0]-0.5*legenda2.get_width()),int(0.22*screen.dimensao[1]+2*legenda1.get_height())]
-legenda3=fonte2.render('xadrez',1,cor)
+legenda3=fonte2.render('Xadrez',1,cor)
 pos3=[int(0.5*screen.dimensao[0]-0.5*legenda3.get_width()),int(0.22*screen.dimensao[1]+2*legenda2.get_height())]
 selecionador=font.SysFont('arial',tam2,negrito,italico).render('>',1,cor)
 pos_selecionador1=[int(pos2[0]-0.4*legenda2.get_width()),pos2[1]+incremento_altura*selecionador.get_height()]
@@ -1328,9 +1328,9 @@ else:
 	fonte1=font.SysFont('arial',tam1,negrito,italico)
 	fonte2=font.SysFont('arial',tam2,negrito,italico)
 
-legenda1=fonte1.render(['jogo de damas','jogo de xadrez'][jogo_selecionado-1],1,cor)
+legenda1=fonte1.render(['Jogo de Damas','Jogo de Xadrez'][jogo_selecionado-1],1,cor)
 pos1=[int(0.5*screen.dimensao[0]-0.5*legenda1.get_width()),int(0.2*screen.dimensao[1])]
-legenda2=fonte2.render('com processamento de voz',1,cor)
+legenda2=fonte2.render('com Processamento de Voz',1,cor)
 pos2=[int(0.5*screen.dimensao[0]-0.5*legenda2.get_width()),int(0.22*screen.dimensao[1]+legenda1.get_height())]
 
 
